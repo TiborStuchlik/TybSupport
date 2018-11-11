@@ -18,7 +18,9 @@ gem "csv", "~> 1.0.2" if RUBY_VERSION >= "2.3"
 gem "nokogiri", "~> 1.8.0"
 gem "i18n", "~> 0.7.0"
 
-#gem "passenger", ">= 5.0.25", require: "phusion_passenger/rack_handler"
+#gem "passenger" #, ">= 5.0.25", require: "phusion_passenger/rack_handler"
+#gem 'unicorn'
+gem 'puma'
 
 # Request at least rails-html-sanitizer 1.0.3 because of security advisories
 gem "rails-html-sanitizer", ">= 1.0.3"
@@ -84,6 +86,7 @@ end
 group :development do
   gem "rdoc", "~> 4.3"
   gem "yard"
+  #gem 'puma', '~> 3.7'
 end
 
 group :test do
@@ -91,7 +94,7 @@ group :test do
   gem "mocha"
   gem "simplecov", "~> 0.14.1", :require => false
   # For running system tests
-  gem 'puma', '~> 3.7'
+
   gem "capybara", '~> 2.13'
   gem "selenium-webdriver"
 end

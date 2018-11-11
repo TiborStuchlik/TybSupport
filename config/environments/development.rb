@@ -18,4 +18,7 @@ Rails.application.configure do
 
   # Print deprecation notices to stderr and the Rails logger.
   config.active_support.deprecation = [:stderr, :log]
+
+  config.assets.debug = false
+  #config.assets.quiet = true
 end
