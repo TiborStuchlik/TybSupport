@@ -23,5 +23,6 @@ Rails.application.configure do
   #config.assets.quiet = true
   #
 
-  config.web_socket_server_url = "wss://support.tyb.cz/cable"
+  config.web_socket_server_url = ["wss://support.tyb.cz/cable","ws://support.tyb.cz/cable"]
+  config.action_cable.allowed_request_origins = [ 'http://support.tyb.cz' ]
 end
