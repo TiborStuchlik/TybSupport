@@ -21,4 +21,7 @@ Rails.application.configure do
 
   config.assets.debug = false
   #config.assets.quiet = true
+  #
+
+  config.web_socket_server_url = "wss://support.tyb.cz/cable"
 end
