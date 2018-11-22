@@ -18,9 +18,9 @@ gem "csv", "~> 1.0.2" if RUBY_VERSION >= "2.3"
 gem "nokogiri", "~> 1.8.0"
 gem "i18n", "~> 0.7.0"
 
-#gem "passenger" #, ">= 5.0.25", require: "phusion_passenger/rack_handler"
+gem "passenger" #, ">= 5.0.25", require: "phusion_passenger/rack_handler"
 #gem 'unicorn'
-gem 'puma'
+#gem 'puma'
 
 # Request at least rails-html-sanitizer 1.0.3 because of security advisories
 gem "rails-html-sanitizer", ">= 1.0.3"
