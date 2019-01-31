@@ -38,3 +38,4 @@
 /Gemfile.local
 
 /nbproject/
+config/database.yml.example
