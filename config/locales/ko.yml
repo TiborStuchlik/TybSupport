@@ -593,7 +593,6 @@ ko:
   label_less_or_equal: "<="
   label_in: 이내
   label_today: 오늘
-  label_all_time: 모든 시간
   label_yesterday: 어제
   label_this_week: 이번주
   label_last_week: 지난 주
@@ -1293,3 +1292,9 @@ ko:
     check to prevent any manipulation during the authentication process.
   label_nothing_to_preview: Nothing to preview
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: 관계 지우기
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

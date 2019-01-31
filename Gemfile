@@ -1,21 +1,18 @@
 source 'https://rubygems.org'
 
-if Gem::Version.new(Bundler::VERSION) < Gem::Version.new('1.5.0')
-  abort "Redmine requires Bundler 1.5.0 or higher (you're using #{Bundler::VERSION}).\nPlease update with 'gem update bundler'."
-end
+gem "bundler", ">= 1.5.0"
 
-gem "rails", "5.2.1"
-gem "rouge", "~> 3.2.1"
+gem "rails", "5.2.2"
+gem "rouge", "~> 3.3.0"
 gem "request_store", "1.0.5"
 gem "mini_mime", "~> 1.0.1"
 gem "actionpack-xml_parser"
 gem "roadie-rails", "~> 1.3.0"
-gem "roadie", "~> 3.2.1"
 gem "mimemagic"
 gem "mail", "~> 2.7.1"
-gem "csv", "~> 1.0.2" if RUBY_VERSION >= "2.3"
+gem "csv", "~> 3.0.1" if RUBY_VERSION >= "2.3" && RUBY_VERSION < "2.6"
 
-gem "nokogiri", "~> 1.8.0"
+gem "nokogiri", (RUBY_VERSION >= "2.3" ? "~> 1.10.0" : "~> 1.9.1")
 gem "i18n", "~> 0.7.0"
 
 #gem "passenger" , ">= 5.0.25", require: "phusion_passenger/rack_handler"
@@ -66,7 +63,7 @@ if File.exist?(database_file)
       when 'mysql2'
         gem "mysql2", "~> 0.5.0", :platforms => [:mri, :mingw, :x64_mingw]
       when /postgresql/
-        gem "pg", "~> 1.0.0", :platforms => [:mri, :mingw, :x64_mingw]
+        gem "pg", "~> 1.1.4", :platforms => [:mri, :mingw, :x64_mingw]
       when /sqlite3/
         gem "sqlite3", "~>1.3.12", :platforms => [:mri, :mingw, :x64_mingw]
       when /sqlserver/
@@ -84,7 +81,6 @@ else
 end
 
 group :development do
-  gem "rdoc", "~> 4.3"
   gem "yard"
   #gem 'puma', '~> 3.7'
 end

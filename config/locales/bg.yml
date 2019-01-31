@@ -736,7 +736,6 @@ bg:
   label_between: между
   label_in: в следващите
   label_today: днес
-  label_all_time: всички
   label_yesterday: вчера
   label_this_week: тази седмица
   label_last_week: последната седмица
@@ -1232,3 +1231,9 @@ bg:
   label_ldaps_verify_peer: LDAPS
   label_ldaps_warning: препоръчително е да се използва криптирана LDAPS връзка със сертификат за предотвратяване на намеса по време на процеса на удостоверяване.
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: Изтриване на релация
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

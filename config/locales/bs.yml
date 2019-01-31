@@ -550,7 +550,6 @@ bs:
   label_in_more_than: je više nego
   label_in: u
   label_today: danas
-  label_all_time: sve vrijeme
   label_yesterday: juče
   label_this_week: ova hefta
   label_last_week: zadnja hefta
@@ -1268,3 +1267,9 @@ bs:
     check to prevent any manipulation during the authentication process.
   label_nothing_to_preview: Nothing to preview
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: Izbriši relaciju
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

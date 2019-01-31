@@ -337,7 +337,7 @@ fr:
   field_is_filter: Utilisé comme filtre
   field_issue_to: Demande liée
   field_delay: Retard
-  field_assignable: Demandes assignables à ce rôle
+  field_assignable: Demandes assignables aux utilisateurs ayant ce rôle
   field_redirect_existing_links: Rediriger les liens existants
   field_estimated_hours: Temps estimé
   field_column_names: Colonnes
@@ -742,7 +742,6 @@ fr:
   label_between: entre
   label_in: dans
   label_today: aujourd'hui
-  label_all_time: toute la période
   label_yesterday: hier
   label_this_week: cette semaine
   label_last_week: la semaine dernière
@@ -1117,7 +1116,7 @@ fr:
   text_caracters_maximum: "%{count} caractères maximum."
   text_caracters_minimum: "%{count} caractères minimum."
   text_length_between: "Longueur comprise entre %{min} et %{max} caractères."
-  text_tracker_no_workflow: Aucun worflow n'est défini pour ce tracker
+  text_tracker_no_workflow: Aucun workflow n'est défini pour ce tracker
   text_unallowed_characters: Caractères non autorisés
   text_comma_separated: Plusieurs valeurs possibles (séparées par des virgules).
   text_line_separated: Plusieurs valeurs possibles (une valeur par ligne).
@@ -1247,4 +1246,9 @@ fr:
   label_ldaps_verify_peer: LDAPS
   label_ldaps_warning: "Il est recommandé d'utiliser une connexion LDPAS avec vérification du certificat pour empêcher toute interception des données durant la procédure d'authentification."
   label_nothing_to_preview: "Aucun texte à prévisualiser"
-  error_token_expired: This password recovery link has expired, please try again.
+  error_token_expired: "Ce lien de récupération de votre mot de passe a expiré, veuillez recommencer."
+  error_spent_on_future_date: "Impossible d'enregistrer un temps passé sur une date future"
+  setting_timelog_accept_future_dates: "Autoriser la saisie de temps sur une date future"
+  label_delete_link_to_subtask: "Supprimer la relation avec la sous-tâche"
+  error_not_allowed_to_log_time_for_other_users: "Vous n'êtes pas autorisé à saisir le temps passé pour d'autres utilisateurs"
+  permission_log_time_for_other_users: "Saisir le temps passé pour d'autres utilisateurs"

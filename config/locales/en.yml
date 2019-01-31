@@ -223,6 +223,8 @@ en:
   warning_fields_cleared_on_bulk_edit: "Changes will result in the automatic deletion of values from one or more fields on the selected objects"
   error_exceeds_maximum_hours_per_day: "Cannot log more than %{max_hours} hours on the same day (%{logged_hours} hours have already been logged)"
   error_can_not_delete_auth_source: "This authentication mode is in use and cannot be deleted."
+  error_spent_on_future_date: "Cannot log time on a future date"
+  error_not_allowed_to_log_time_for_other_users: "You are not allowed to log time for other users"
 
   mail_subject_lost_password: "Your %{value} password"
   mail_body_lost_password: 'To change your password, click on the following link:'
@@ -327,7 +329,7 @@ en:
   field_is_filter: Used as a filter
   field_issue_to: Related issue
   field_delay: Delay
-  field_assignable: Issues can be assigned to this role
+  field_assignable: Issues can be assigned to users with this role
   field_redirect_existing_links: Redirect existing links
   field_estimated_hours: Estimated time
   field_column_names: Columns
@@ -469,6 +471,7 @@ en:
   setting_time_entry_list_defaults: Timelog list defaults
   setting_timelog_accept_0_hours: Accept time logs with 0 hours
   setting_timelog_max_hours_per_day: Maximum hours that can be logged per day and user
+  setting_timelog_accept_future_dates: Accept time logs on future dates
 
   permission_add_project: Create project
   permission_add_subprojects: Create subprojects
@@ -535,6 +538,7 @@ en:
   permission_manage_subtasks: Manage subtasks
   permission_manage_related_issues: Manage related issues
   permission_import_issues: Import issues
+  permission_log_time_for_other_users: Log spent time for other users
 
   project_module_issue_tracking: Issue tracking
   project_module_time_tracking: Time tracking
@@ -737,14 +741,16 @@ en:
   label_between: between
   label_in: in
   label_today: today
-  label_all_time: all time
   label_yesterday: yesterday
+  label_tomorrow: tomorrow
   label_this_week: this week
   label_last_week: last week
+  label_next_week: next week
   label_last_n_weeks: "last %{count} weeks"
   label_last_n_days: "last %{count} days"
   label_this_month: this month
   label_last_month: last month
+  label_next_month: next month
   label_this_year: this year
   label_date_range: Date range
   label_less_than_ago: less than days ago
@@ -828,6 +834,7 @@ en:
   label_relation_new: New relation
   label_relation_delete: Delete relation
   label_relates_to: Related to
+  label_delete_link_to_subtask: Delete link to subtask
   label_duplicates: Is duplicate of
   label_duplicated_by: Has duplicate
   label_blocks: Blocks

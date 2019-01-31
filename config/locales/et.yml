@@ -652,7 +652,6 @@ et:
   label_between: "vahemikus"
   label_in: "sisaldub hulgas"
   label_today: "täna"
-  label_all_time: "piirideta"
   label_yesterday: "eile"
   label_this_week: "sel nädalal"
   label_last_week: "eelmisel nädalal"
@@ -1260,3 +1259,9 @@ et:
     check to prevent any manipulation during the authentication process.
   label_nothing_to_preview: Nothing to preview
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: "Kustuta seos"
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

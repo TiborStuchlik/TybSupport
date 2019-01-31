@@ -417,7 +417,6 @@ de:
   label_age: Geändert vor
   label_ago: vor
   label_all: alle
-  label_all_time: gesamter Zeitraum
   label_all_words: Alle Wörter
   label_and_its_subprojects: "%{value} und dessen Unterprojekte"
   label_any: alle
@@ -1248,3 +1247,9 @@ de:
   text_project_is_public_non_member: Öffentliche Projekte und deren Inhalte sind für alle angemeldeten Benutzer zugänglich.
   text_project_is_public_anonymous: Öffentliche Projekte und deren Inhalte sind ohne Anmeldung frei zugänglich.
   label_nothing_to_preview: Nothing to preview
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: Beziehung löschen
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

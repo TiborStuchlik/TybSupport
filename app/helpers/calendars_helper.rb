@@ -18,6 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 module CalendarsHelper
+  include Redmine::Utils::DateCalculation
+
   def link_to_previous_month(year, month, options={})
     target_year, target_month = if month == 1
                                   [year - 1, 12]
@@ -54,5 +56,12 @@ module CalendarsHelper
 
   def link_to_month(link_name, year, month, options={})
     link_to(link_name, {:params => request.query_parameters.merge(:year => year, :month => month)}, options)
+  end
+
+  def calendar_day_css_classes(calendar, day)
+    css = day.month==calendar.month ? 'even' : 'odd'
+    css << " today" if User.current.today == day
+    css << " nwday" if non_working_week_days.include?(day.cwday)
+    css
   end
 end

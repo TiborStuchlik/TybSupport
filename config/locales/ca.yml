@@ -590,7 +590,6 @@ ca:
   label_less_or_equal: "<="
   label_in: "en"
   label_today: "avui"
-  label_all_time: "tot el temps"
   label_yesterday: "ahir"
   label_this_week: "aquesta setmana"
   label_last_week: "l'última setmana"
@@ -1245,3 +1244,9 @@ ca:
     check to prevent any manipulation during the authentication process.
   label_nothing_to_preview: Nothing to preview
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: "Suprimir relació"
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

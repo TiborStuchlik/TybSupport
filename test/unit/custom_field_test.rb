@@ -20,7 +20,11 @@ require File.expand_path('../../test_helper', __FILE__)
 class CustomFieldTest < ActiveSupport::TestCase
   fixtures :custom_fields, :roles, :projects,
            :trackers, :issue_statuses,
-           :issues
+           :issues, :users
+
+  def setup
+    User.current = nil
+  end
 
   def test_create
     field = UserCustomField.new(:name => 'Money money money', :field_format => 'float')
@@ -206,6 +210,7 @@ class CustomFieldTest < ActiveSupport::TestCase
     assert f.valid_field_value?('')
     assert !f.valid_field_value?(' ')
     assert f.valid_field_value?('123')
+    assert f.valid_field_value?(' 123 ')
     assert f.valid_field_value?('+123')
     assert f.valid_field_value?('-123')
     assert !f.valid_field_value?('6abc')
@@ -219,6 +224,7 @@ class CustomFieldTest < ActiveSupport::TestCase
     assert f.valid_field_value?('')
     assert !f.valid_field_value?(' ')
     assert f.valid_field_value?('11.2')
+    assert f.valid_field_value?(' 11.2 ')
     assert f.valid_field_value?('-6.250')
     assert f.valid_field_value?('5')
     assert !f.valid_field_value?('6abc')

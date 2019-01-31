@@ -33,11 +33,14 @@ class RepositoryTest < ActiveSupport::TestCase
            :members,
            :member_roles,
            :roles,
-           :enumerations
+           :enumerations,
+           :user_preferences,
+           :watchers
 
   include Redmine::I18n
 
   def setup
+    User.current = nil
     @repository = Project.find(1).repository
   end
 

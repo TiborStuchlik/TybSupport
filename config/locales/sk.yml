@@ -465,7 +465,6 @@ sk:
   label_in_more_than: je väčší ako
   label_in: v
   label_today: dnes
-  label_all_time: vždy
   label_yesterday: včera
   label_this_week: tento týždeň
   label_last_week: minulý týždeň
@@ -1244,3 +1243,9 @@ sk:
     check to prevent any manipulation during the authentication process.
   label_nothing_to_preview: Nothing to preview
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: Odstrániť prepojenie
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

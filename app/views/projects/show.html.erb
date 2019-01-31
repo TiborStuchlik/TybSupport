@@ -17,6 +17,7 @@
   <p class="warning"><span class="icon icon-lock"><%= l(:text_project_closed) %></span></p>
 <% end %>
 
+<div class="splitcontent">
 <div class="splitcontentleft">
   <% if @project.description.present? %>
   <div class="wiki">
@@ -82,10 +83,15 @@
 
   <% if User.current.allowed_to?(:view_time_entries, @project) %>
   <div class="spent_time box">
-    <h3 class="icon icon-time"><%= l(:label_spent_time) %></h3>
-    <% if @total_hours.present? %>
-      <p><%= l_hours(@total_hours) %></p>
-    <% end %>
+    <h3 class="icon icon-time"><%= l(:label_time_tracking) %></h3>
+    <ul>
+      <% if @total_estimated_hours.present? %>
+        <li><%= l(:field_estimated_hours) %>: <%= l_hours(@total_estimated_hours) %>
+      <% end %>
+      <% if @total_hours.present? %>
+          <li><%= l(:label_spent_time) %>: <%= l_hours(@total_hours) %>
+      <% end %>
+    </ul>
     <p>
     <% if User.current.allowed_to?(:log_time, @project) %>
       <%= link_to l(:button_log_time), new_project_time_entry_path(@project) %> |
@@ -117,6 +123,7 @@
   <% end %>
 
   <%= call_hook(:view_projects_show_right, :project => @project) %>
+</div>
 </div>
 
 <% content_for :sidebar do %>

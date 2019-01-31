@@ -524,9 +524,9 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response :success
   end
 
-  def show_archived_project_should_be_denied
+  def test_show_archived_project_should_be_denied
     project = Project.find_by_identifier('ecookbook')
-    project.archive!
+    project.archive
 
     get :show, :params => {
         :id => 'ecookbook'
@@ -534,6 +534,18 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response 403
     assert_select 'p', :text => /archived/
     assert_not_include project.name, response.body
+  end
+
+  def test_show_archived_project_should_show_unarchive_link_to_admins
+    @request.session[:user_id] = 1
+    project = Project.find_by_identifier('ecookbook')
+    project.archive
+  
+    get :show, :params => {
+        :id => 'ecookbook'
+      }
+    assert_response 403
+    assert_select 'a', :text => "Unarchive"
   end
 
   def test_show_should_not_show_private_subprojects_that_are_not_visible
@@ -561,6 +573,18 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response :success
     # Make sure there's a > 0 issue count
     assert_select 'table.issue-report td.total a', :text => %r{\A[1-9]\d*\z}
+  end
+
+  def test_show_should_spent_and_estimated_time
+    @request.session[:user_id] = 1
+    get :show, :params => {
+        :id => 'ecookbook'
+      }
+
+    assert_select 'div.spent_time.box>ul' do
+      assert_select '>li:nth-child(1)', :text => 'Estimated time: 203.50 hours'
+      assert_select '>li:nth-child(2)', :text => 'Spent time: 162.90 hours'
+    end
   end
 
   def test_settings
