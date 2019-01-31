@@ -732,7 +732,6 @@ fa:
   label_between: میان
   label_in: در
   label_today: امروز
-  label_all_time: همیشه
   label_yesterday: دیروز
   label_this_week: این هفته
   label_last_week: هفته قبل
@@ -1240,3 +1239,9 @@ fa:
     check to prevent any manipulation during the authentication process.
   label_nothing_to_preview: Nothing to preview
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: حذف ارتباط
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

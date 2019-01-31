@@ -413,7 +413,6 @@ ru:
   label_administration: Администрирование
   label_age: Возраст
   label_ago: дней(я) назад
-  label_all_time: всё время
   label_all_words: Все слова
   label_all: все
   label_and_its_subprojects: "%{value} и все подпроекты"
@@ -1343,3 +1342,9 @@ ru:
   label_ldaps_warning: Рекомендуется использовать зашифрованное соединение LDAPS с проверкой сертификата для предотвращения любых посторонних вмешательств в процессе аутентификации.
   label_nothing_to_preview: Нет данных для предварительного просмотра
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: Удалить связь
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

@@ -237,7 +237,7 @@ class MailHandler < ActionMailer::Base
     end
 
     # ignore CLI-supplied defaults for new issues
-    handler_options[:issue].clear
+    handler_options[:issue] = {}
 
     journal = issue.init_journal(user)
     if from_journal && from_journal.private_notes?
@@ -250,8 +250,8 @@ class MailHandler < ActionMailer::Base
 
     # add To and Cc as watchers before saving so the watchers can reply to Redmine
     add_watchers(issue)
-    add_attachments(issue)
     issue.save!
+    add_attachments(issue)
     if logger
       logger.info "MailHandler: issue ##{issue.id} updated by #{user}"
     end

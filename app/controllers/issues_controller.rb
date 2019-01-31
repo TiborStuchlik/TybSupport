@@ -40,7 +40,8 @@ class IssuesController < ApplicationController
   helper :timelog
 
   def index
-    retrieve_query
+    use_session = !request.format.csv?
+    retrieve_query(IssueQuery, use_session)
 
     if @query.valid?
       respond_to do |format|
@@ -176,7 +177,7 @@ class IssuesController < ApplicationController
 
     if saved
       render_attachment_warning_if_needed(@issue)
-      flash[:notice] = l(:notice_successful_update) unless @issue.current_journal.new_record?
+      flash[:notice] = l(:notice_successful_update) unless @issue.current_journal.new_record? || params[:no_flash]
 
       respond_to do |format|
         format.html { redirect_back_or_default issue_path(@issue, previous_and_next_issue_ids_params) }

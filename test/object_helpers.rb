@@ -87,8 +87,9 @@ module ObjectHelpers
   end
 
   # Generates an unsaved Issue
+  # Doesn't send notifications by default, use :notify => true to send them
   def Issue.generate(attributes={})
-    issue = Issue.new(attributes)
+    issue = Issue.new(attributes.reverse_merge(:notify => false))
     issue.project ||= Project.find(1)
     issue.tracker ||= issue.project.trackers.first
     issue.subject = 'Generated' if issue.subject.blank?
@@ -98,6 +99,7 @@ module ObjectHelpers
   end
 
   # Generates a saved Issue
+  # Doesn't send notifications by default, use :notify => true to send them
   def Issue.generate!(attributes={}, &block)
     issue = Issue.generate(attributes, &block)
     issue.save!
@@ -142,6 +144,7 @@ module ObjectHelpers
   def TimeEntry.generate(attributes={})
     entry = TimeEntry.new(attributes)
     entry.user ||= User.find(2)
+    entry.author ||= entry.user
     entry.issue ||= Issue.find(1) unless entry.project
     entry.project ||= entry.issue.project
     entry.activity ||= TimeEntryActivity.first

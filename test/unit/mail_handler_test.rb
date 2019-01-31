@@ -26,8 +26,8 @@ class MailHandlerTest < ActiveSupport::TestCase
            :issues, :issue_statuses,
            :workflows, :trackers, :projects_trackers,
            :versions, :enumerations, :issue_categories,
-           :custom_fields, :custom_fields_trackers, :custom_fields_projects,
-           :boards, :messages
+           :custom_fields, :custom_fields_trackers, :custom_fields_projects, :custom_values,
+           :boards, :messages, :watchers
 
   FIXTURES_PATH = File.dirname(__FILE__) + '/../fixtures/mail_handler'
 
@@ -888,6 +888,21 @@ class MailHandlerTest < ActiveSupport::TestCase
     detail = journal.details.first
     assert_equal 'attachment', detail.property
     assert_equal 'Paella.jpg', detail.value
+  end
+
+  def test_update_issue_should_discard_all_changes_on_validation_failure
+    Issue.any_instance.stubs(:valid?).returns(false)
+    assert_no_difference 'Journal.count' do
+      assert_no_difference 'JournalDetail.count' do
+        assert_no_difference 'Attachment.count' do
+          assert_no_difference 'Issue.count' do
+            journal = submit_email('ticket_with_attachment.eml') do |raw|
+              raw.gsub! /^Subject: .*$/, 'Subject: Re: [Cookbook - Feature #2] (New) Add ingredients categories'
+            end
+          end
+        end
+      end
+    end
   end
 
   def test_update_issue_should_send_email_notification

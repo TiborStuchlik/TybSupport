@@ -335,7 +335,6 @@ gl:
   label_age: Idade
   label_ago: "hai"
   label_all: todos
-  label_all_time: todo o tempo
   label_all_words: Tódalas palabras
   label_and_its_subprojects: "%{value} e proxectos secundarios"
   label_applied_status: Aplicar estado
@@ -1263,3 +1262,9 @@ gl:
     certificado para evitar calquera manipulación durante o proceso de autenticación.
   label_nothing_to_preview: Nada que previsualizar
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: Eliminar relación
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

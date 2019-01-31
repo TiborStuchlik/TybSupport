@@ -43,7 +43,8 @@ class IssuesControllerTest < Redmine::ControllerTest
            :journal_details,
            :queries,
            :repositories,
-           :changesets
+           :changesets,
+           :watchers
 
   include Redmine::I18n
 
@@ -331,6 +332,51 @@ class IssuesControllerTest < Redmine::ControllerTest
       }
     assert_response :success
     assert_select 'tr.group span.count'
+  end
+
+  def test_index_grouped_by_due_date
+    Issue.destroy_all
+    Issue.generate!(:due_date => '2018-08-10')
+    Issue.generate!(:due_date => '2018-08-10')
+    Issue.generate!
+
+    get :index, :params => {
+        :set_filter => 1,
+        :group_by => "due_date"
+      }
+    assert_response :success
+    assert_select 'tr.group span.name', :value => '2018-08-10' do
+      assert_select '~ span.count', value:'2'
+    end
+    assert_select 'tr.group span.name', :value => '(blank)' do
+      assert_select '~ span.count', value:'1'
+    end
+  end
+
+  def test_index_grouped_by_created_on
+    skip unless IssueQuery.new.groupable_columns.detect {|c| c.name == :created_on}
+  
+    get :index, :params => {
+        :set_filter => 1,
+        :group_by => 'created_on'
+      }
+    assert_response :success
+  
+    assert_select 'tr.group span.name', :text => '07/19/2006' do
+      assert_select '+ span.count', :text => '2'
+    end
+  end
+  
+  def test_index_grouped_by_created_on_as_pdf
+    skip unless IssueQuery.new.groupable_columns.detect {|c| c.name == :created_on}
+  
+    get :index, :params => {
+        :set_filter => 1,
+        :group_by => 'created_on',
+        :format => 'pdf'
+      }
+    assert_response :success
+    assert_equal 'application/pdf', response.content_type
   end
 
   def test_index_with_query_grouped_by_list_custom_field
@@ -803,6 +849,25 @@ class IssuesControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_index_csv_should_not_change_selected_columns
+    get :index, :params => {
+        :set_filter => 1,
+        :c => ["subject", "due_date"],
+        :project_id => "ecookbook"
+      }
+    assert_response :success
+    assert_equal [:subject, :due_date], session[:issue_query][:column_names]
+
+    get :index, :params => {
+        :set_filter => 1,
+        :c =>["all_inline"],
+        :project_id => "ecookbook",
+        :format => 'csv'
+      }
+    assert_response :success
+    assert_equal [:subject, :due_date], session[:issue_query][:column_names]
+  end
+
   def test_index_pdf
     ["en", "zh", "zh-TW", "ja", "ko"].each do |lang|
       with_settings :default_language => lang do
@@ -978,13 +1043,13 @@ class IssuesControllerTest < Redmine::ControllerTest
 
     get :index, :params => {:sort => "spent_hours:desc", :c => ['subject','spent_hours']}
     assert_response :success
-    assert_equal [4.0, 3.0, 0.0], issues_in_list.map(&:spent_hours)[0..2]
+    assert_equal ['4.00', '3.00', '0.00'], columns_values_in_list('spent_hours')[0..2]
 
     Project.find(3).disable_module!(:time_tracking)
 
     get :index, :params => {:sort => "spent_hours:desc", :c => ['subject','spent_hours']}
     assert_response :success
-    assert_equal [3.0, 0.0, 0.0], issues_in_list.map(&:spent_hours)[0..2]
+    assert_equal ['3.00', '0.00', '0.00'], columns_values_in_list('spent_hours')[0..2]
   end
 
   def test_index_sort_by_total_spent_hours
@@ -1002,6 +1067,8 @@ class IssuesControllerTest < Redmine::ControllerTest
       }
     assert_response :success
     hours = issues_in_list.map(&:total_estimated_hours)
+    # Removes nil because the position of NULL is database dependent
+    hours.compact!
     assert_equal hours.sort.reverse, hours
   end
 
@@ -1796,6 +1863,21 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_response :success
   end
 
+  def test_show_should_format_related_issues_dates
+    with_settings :date_format => '%d/%m/%Y' do
+      issue = Issue.generate!(:start_date => '2018-11-29', :due_date => '2018-12-01')
+      IssueRelation.create!(:issue_from => Issue.find(1), :issue_to => issue, :relation_type => 'relates')
+  
+      get :show, :params => {
+          :id => 1
+        }
+      assert_response :success
+  
+      assert_select '#relations td.start_date', :text => '29/11/2018'
+      assert_select '#relations td.due_date', :text => '01/12/2018'
+    end
+  end
+
   def test_show_should_not_disclose_relations_to_invisible_issues
     Setting.cross_project_issue_relations = '1'
     IssueRelation.create!(:issue_from => Issue.find(1), :issue_to => Issue.find(2), :relation_type => 'relates')
@@ -2133,6 +2215,25 @@ class IssuesControllerTest < Redmine::ControllerTest
     # long text custom field should be render under description field
     assert_select "div.description ~ div.attribute.cf_#{field.id} p strong", :text => 'Long text'
     assert_select "div.description ~ div.attribute.cf_#{field.id} div.value", :text => 'This is a long text'
+  end
+
+  def test_show_custom_fields_with_full_text_formatting_should_be_rendered_using_wiki_class
+    half_field = IssueCustomField.create!(:name => 'Half width field', :field_format => 'text', :tracker_ids => [1],
+      :is_for_all => true, :text_formatting => 'full')
+    full_field = IssueCustomField.create!(:name => 'Full width field', :field_format => 'text', :full_width_layout => '1',
+      :tracker_ids => [1], :is_for_all => true, :text_formatting => 'full')
+
+    issue = Issue.find(1)
+    issue.custom_field_values = {full_field.id => 'This is a long text', half_field.id => 'This is a short text'}
+    issue.save!
+
+    get :show, :params => {
+        :id => 1
+      }
+    assert_response :success
+
+    assert_select "div.attribute.cf_#{half_field.id} div.value div.wiki", 1
+    assert_select "div.attribute.cf_#{full_field.id} div.value div.wiki", 1
   end
 
   def test_show_with_multi_user_custom_field
@@ -5618,6 +5719,8 @@ class IssuesControllerTest < Redmine::ControllerTest
           }
         }
       assert_response 302
+      # 4 emails for 2 members and 2 issues
+      # 1 email for a watcher of issue #2
       assert_equal 5, ActionMailer::Base.deliveries.size
     end
   end
@@ -5718,6 +5821,23 @@ class IssuesControllerTest < Redmine::ControllerTest
     assert_redirected_to :controller => 'issues', :action => 'index', :project_id => 'ecookbook'
     assert_equal 'Moving two issues', Issue.find(1).journals.sort_by(&:id).last.notes
     assert_equal 'Moving two issues', Issue.find(2).journals.sort_by(&:id).last.notes
+    assert_equal false, Issue.find(1).journals.sort_by(&:id).last.private_notes
+    assert_equal false, Issue.find(2).journals.sort_by(&:id).last.private_notes
+  end
+
+  def test_bulk_update_with_private_notes
+    @request.session[:user_id] = 2
+    post :bulk_update, :params => {
+        :ids => [1, 2],
+        :notes => 'Moving two issues',
+        :issue => {:private_notes => 'true'}
+      }
+
+    assert_redirected_to :controller => 'issues', :action => 'index', :project_id => 'ecookbook'
+    assert_equal 'Moving two issues', Issue.find(1).journals.sort_by(&:id).last.notes
+    assert_equal 'Moving two issues', Issue.find(2).journals.sort_by(&:id).last.notes
+    assert_equal true, Issue.find(1).journals.sort_by(&:id).last.private_notes
+    assert_equal true, Issue.find(2).journals.sort_by(&:id).last.private_notes
   end
 
   def test_bulk_update_parent_id

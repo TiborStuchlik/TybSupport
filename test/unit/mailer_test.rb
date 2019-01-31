@@ -378,12 +378,14 @@ class MailerTest < ActiveSupport::TestCase
   def test_issue_add_should_not_include_disabled_fields
     issue = Issue.find(2)
     tracker = issue.tracker
-    tracker.core_fields -= ['fixed_version_id']
+    tracker.core_fields -= ['fixed_version_id', 'start_date']
     tracker.save!
     assert Mailer.deliver_issue_add(issue)
     assert_mail_body_no_match 'Target version', last_email
+    assert_mail_body_no_match 'Start date', last_email
     assert_select_email do
       assert_select 'li', :text => /Target version/, :count => 0
+      assert_select 'li', :text => /Start date/, :count => 0
     end
   end
 
@@ -621,6 +623,27 @@ class MailerTest < ActiveSupport::TestCase
     end
   end
 
+  def test_reminders_should_sort_issues_by_due_date
+    user = User.find(2)
+    Issue.generate!(:assigned_to => user, :due_date => 2.days.from_now, :subject => 'quux')
+    Issue.generate!(:assigned_to => user, :due_date => 0.days.from_now, :subject => 'baz')
+    Issue.generate!(:assigned_to => user, :due_date => 1.days.from_now, :subject => 'qux')
+    Issue.generate!(:assigned_to => user, :due_date => -1.days.from_now, :subject => 'foo')
+    Issue.generate!(:assigned_to => user, :due_date => -1.days.from_now, :subject => 'bar')
+    ActionMailer::Base.deliveries.clear
+
+    Mailer.reminders(:days => 7, :users => [user.id])
+    assert_equal 1, ActionMailer::Base.deliveries.size
+    assert_select_email do
+      assert_select 'li', 5
+      assert_select 'li:nth-child(1)', /foo/
+      assert_select 'li:nth-child(2)', /bar/
+      assert_select 'li:nth-child(3)', /baz/
+      assert_select 'li:nth-child(4)', /qux/
+      assert_select 'li:nth-child(5)', /quux/
+    end
+  end
+
   def test_security_notification
     set_language_if_valid User.find(1).language
     with_settings :emails_footer => "footer without link" do
@@ -684,7 +707,7 @@ class MailerTest < ActiveSupport::TestCase
     # Send an email to a french user
     user = User.find(1)
     user.update_attribute :language, 'fr'
-    
+
     Mailer.deliver_account_activated(user)
     mail = last_email
     assert_mail_body_match 'Votre compte', mail
@@ -770,7 +793,7 @@ class MailerTest < ActiveSupport::TestCase
   end
 
   def test_should_escape_html_templates_only
-    Issue.generate!(:project_id => 1, :tracker_id => 1, :subject => 'Subject with a <tag>')
+    Issue.generate!(:project_id => 1, :tracker_id => 1, :subject => 'Subject with a <tag>', :notify => true)
     mail = last_email
     assert_equal 2, mail.parts.size
     assert_include '<tag>', text_part.body.encoded

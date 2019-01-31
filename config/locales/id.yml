@@ -556,7 +556,6 @@ id:
   label_less_or_equal: '<='
   label_in: pada
   label_today: hari ini
-  label_all_time: semua waktu
   label_yesterday: kemarin
   label_this_week: minggu ini
   label_last_week: minggu lalu
@@ -1257,3 +1256,9 @@ id:
     check to prevent any manipulation during the authentication process.
   label_nothing_to_preview: Nothing to preview
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: Hapus kaitan
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

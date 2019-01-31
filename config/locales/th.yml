@@ -466,7 +466,6 @@ th:
   label_in_more_than: มากกว่า
   label_in: ในช่วง
   label_today: วันนี้
-  label_all_time: ตลอดเวลา
   label_yesterday: เมื่อวาน
   label_this_week: อาทิตย์นี้
   label_last_week: อาทิตย์ที่แล้ว
@@ -1251,3 +1250,9 @@ th:
     check to prevent any manipulation during the authentication process.
   label_nothing_to_preview: Nothing to preview
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: ลบความสัมพันธ์
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

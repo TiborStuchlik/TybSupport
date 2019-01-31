@@ -601,7 +601,6 @@ zh:
   label_less_or_equal: '<='
   label_in: 剩余天数
   label_today: 今天
-  label_all_time: 全部时间
   label_yesterday: 昨天
   label_this_week: 本周
   label_last_week: 上周
@@ -1243,3 +1242,9 @@ zh:
     check to prevent any manipulation during the authentication process.
   label_nothing_to_preview: Nothing to preview
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: 删除关联
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

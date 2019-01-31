@@ -622,7 +622,6 @@ ar:
   label_between: بين
   label_in: في
   label_today: اليوم
-  label_all_time: كل الوقت
   label_yesterday: بالأمس
   label_this_week: هذا الأسبوع
   label_last_week: الأسبوع الماضي
@@ -1255,3 +1254,9 @@ ar:
     check to prevent any manipulation during the authentication process.
   label_nothing_to_preview: Nothing to preview
   error_token_expired: This password recovery link has expired, please try again.
+  error_spent_on_future_date: Cannot log time on a future date
+  setting_timelog_accept_future_dates: Accept time logs on future dates
+  label_delete_link_to_subtask: حذف العلاقة
+  error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
+    for other users
+  permission_log_time_for_other_users: Log spent time for other users

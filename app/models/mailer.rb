@@ -27,7 +27,7 @@ class Mailer < ActionMailer::Base
   include Roadie::Rails::Automatic
 
   # Overrides ActionMailer::Base#process in order to set the recipient as the current user
-  # and his language as the default locale. 
+  # and his language as the default locale.
   # The first argument of all actions of this Mailer must be a User (the recipient),
   # otherwise an ArgumentError is raised.
   def process(action, *args)
@@ -584,6 +584,7 @@ class Mailer < ActionMailer::Base
     issues_by_assignee.each do |assignee, issues|
       if assignee.is_a?(User) && assignee.active? && issues.present?
         visible_issues = issues.select {|i| i.visible?(assignee)}
+        visible_issues.sort!{|a, b| (a.due_date <=> b.due_date).nonzero? || (a.id <=> b.id)}
         reminder(assignee, visible_issues, days).deliver_later if visible_issues.present?
       end
     end
