@@ -121,7 +121,7 @@
 
 <div id="footer">
   <div class="bgl"><div class="bgr">
-    Powered by <%= link_to Redmine::Info.app_name, Redmine::Info.url %> &copy;1993-2018 TYB.CZ
+    Powered by <%= link_to Redmine::Info.app_name, Redmine::Info.url %> &copy;1993-<%= Time.now.strftime("%Y")%> TYB.CZ
   </div></div>
 </div>
 </div>
