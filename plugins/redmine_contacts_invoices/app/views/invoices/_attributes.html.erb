@@ -7,6 +7,7 @@
   rows.right l(:field_invoice_order_number), invoice.order && invoice.order.visible? ? link_to(invoice.order_number, order_path(invoice.order.id)): invoice.order_number, :class => 'oder-number'
   rows.right l(:field_invoice_date), format_date(invoice.invoice_date), :class => 'start-date'
   rows.right l(:field_invoice_due_date), format_date(invoice.due_date), :class => 'due-date'
+  rows.right l(:field_invoice_tax_date), format_date(invoice.tax_date), :class => 'tax-date'
   rows.right l(:field_invoice_discount), invoice.discount > 0 ? "#{"%.2f"%invoice.discount.round(2)}% / #{price_to_currency(invoice.discount_amount, invoice.currency)}".html_safe : ""
 end %>
   <%= call_hook(:view_invoices_show_details_bottom, :invoice => invoice) %>
