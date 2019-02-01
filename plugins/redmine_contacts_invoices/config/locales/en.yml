@@ -50,6 +50,7 @@ en:
   field_invoice_date: Issue date
   field_invoice_contact: Client
   field_invoice_due_date: Due date
+  field_invoice_tax_date: Tax date
   field_invoice_amount: Amount
   field_invoice_discount: Discount
   field_invoice_assigned_to: Assigned to

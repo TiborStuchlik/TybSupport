@@ -30,6 +30,7 @@
   <p><%= f.text_field :order_number, :label => l(:field_invoice_order_number) %> </p>
   <p><%= f.text_field :invoice_date, :size => 12, :required => true, :type => 'date', :value => invoice.invoice_date.try(:to_date) %><%= calendar_for('invoice_invoice_date') %> </p>
   <p><%= f.text_field :due_date, :label => l(:field_invoice_due_date), :size => 12, :type => 'date', :value => invoice.due_date.try(:to_date) %><%= calendar_for('invoice_due_date') %> </p>
+  <p><%= f.text_field :tax_date, :label => l(:field_invoice_tax_date), :size => 12, :type => 'date', :value => invoice.tax_date.try(:to_date) %><%= calendar_for('invoice_tax_date') %> </p>
   <p>
     <%= check_box_tag :show_discount, "1", false, :onclick=>"$(this).hide(); $(this).parent().find('.discount-fields').show(); $(this).next().find('input').focus(); return false;" if f.object.discount.to_i == 0 %>
     <label for="invoice_discount"><%= l(:field_invoice_discount) %></label>

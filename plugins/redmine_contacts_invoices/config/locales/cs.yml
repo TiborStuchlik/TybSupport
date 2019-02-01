@@ -50,6 +50,7 @@ cs:
   field_invoice_date: Datum vystavení
   field_invoice_contact: Zákazník
   field_invoice_due_date: Datum splatnosti
+  field_invoice_tax_date: Datum zdanitelného plnění
   field_invoice_amount: Množství
   field_invoice_discount: Sleva
   field_invoice_assigned_to: Přiřazeno
