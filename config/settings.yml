@@ -195,6 +195,8 @@ mail_handler_api_enabled:
 mail_handler_api_key:
   default:
   security_notifications: 1
+mail_handler_preferred_body_part:
+  default: plain
 issue_list_default_columns:
   serialized: true
   default:
@@ -308,3 +310,7 @@ timelog_accept_0_hours:
 timelog_max_hours_per_day:
   format: int
   default: 999
+timelog_accept_future_dates:
+  default: 1
+show_status_changes_in_mail_subject:
+  default: 1

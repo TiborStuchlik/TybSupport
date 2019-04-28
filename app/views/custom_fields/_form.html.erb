@@ -1,5 +1,6 @@
 <%= error_messages_for 'custom_field' %>
 
+<div class="splitcontent">
 <div class="splitcontentleft">
 <div class="box tabular">
 <p><%= f.select :field_format, custom_field_formats_for_select(@custom_field), {}, :disabled => !@custom_field.new_record? %></p>
@@ -19,7 +20,14 @@
 
 <%= call_hook(:view_custom_fields_form_upper_box, :custom_field => @custom_field, :form => f) %>
 </div>
-<p><%= submit_tag l(:button_save) %></p>
+<p>
+  <% if @custom_field.new_record? %>
+    <%= submit_tag l(:button_create) %>
+    <%= submit_tag l(:button_create_and_continue), :name => 'continue' %>
+  <% else %>
+    <%= submit_tag l(:button_save) %>
+  <% end %>
+</p>
 </div>
 
 <div class="splitcontentright">
@@ -126,6 +134,7 @@ when "IssueCustomField" %>
     </div>
   </fieldset>
 <% end %>
+</div>
 </div>
 
 <% include_calendar_headers_tags %>

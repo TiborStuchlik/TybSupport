@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -41,11 +43,11 @@ class Redmine::ApiTest::DisabledRestApiTest < Redmine::ApiTest::Base
     @token = Token.create!(:user => @user, :action => 'api')
 
     get "/news.xml?key=#{@token.value}"
-    assert_response :unauthorized
+    assert_response :forbidden
     assert_equal User.anonymous, User.current
 
     get "/news.json?key=#{@token.value}"
-    assert_response :unauthorized
+    assert_response :forbidden
     assert_equal User.anonymous, User.current
   end
 
@@ -55,11 +57,11 @@ class Redmine::ApiTest::DisabledRestApiTest < Redmine::ApiTest::Base
     end
 
     get "/news.xml", :headers => credentials(@user.login, 'my_password')
-    assert_response :unauthorized
+    assert_response :forbidden
     assert_equal User.anonymous, User.current
 
     get "/news.json", :headers => credentials(@user.login, 'my_password')
-    assert_response :unauthorized
+    assert_response :forbidden
     assert_equal User.anonymous, User.current
   end
 
@@ -68,11 +70,11 @@ class Redmine::ApiTest::DisabledRestApiTest < Redmine::ApiTest::Base
     @token = Token.create!(:user => @user, :action => 'api')
 
     get "/news.xml", :headers => credentials(@token.value, 'X')
-    assert_response :unauthorized
+    assert_response :forbidden
     assert_equal User.anonymous, User.current
 
     get "/news.json", :headers => credentials(@token.value, 'X')
-    assert_response :unauthorized
+    assert_response :forbidden
     assert_equal User.anonymous, User.current
   end
 end

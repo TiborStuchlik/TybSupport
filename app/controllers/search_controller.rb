@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -20,8 +22,7 @@ class SearchController < ApplicationController
   accept_api_auth :index
 
   def index
-    @question = params[:q] || ""
-    @question.strip!
+    @question = params[:q]&.strip || ""
     @all_words = params[:all_words] ? params[:all_words].present? : true
     @titles_only = params[:titles_only] ? params[:titles_only].present? : false
     @search_attachments = params[:attachments].presence || '0'
@@ -37,7 +38,7 @@ class SearchController < ApplicationController
     end
 
     # quick jump to an issue
-    if (m = @question.match(/^#?(\d+)$/)) && (issue = Issue.visible.find_by_id(m[1].to_i))
+    if !api_request? && (m = @question.match(/^#?(\d+)$/)) && (issue = Issue.visible.find_by_id(m[1].to_i))
       redirect_to issue_path(issue)
       return
     end
@@ -49,7 +50,7 @@ class SearchController < ApplicationController
       when 'my_projects'
         User.current.projects
       when 'subprojects'
-        @project ? (@project.self_and_descendants.active.to_a) : nil
+        @project ? (@project.self_and_descendants.to_a) : nil
       else
         @project
       end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -19,8 +21,8 @@ module Redmine
   module Platform
     class << self
       def mswin?
-        (RUBY_PLATFORM =~ /(:?mswin|mingw)/) ||
-           (RUBY_PLATFORM == 'java' && (ENV['OS'] || ENV['os']) =~ /windows/i)
+        (/(:?mswin|mingw)/.match?(RUBY_PLATFORM)) ||
+           (RUBY_PLATFORM == 'java' && /windows/i.match?(ENV['OS'] || ENV['os']))
       end
     end
   end

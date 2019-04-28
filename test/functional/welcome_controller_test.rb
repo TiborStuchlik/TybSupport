@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -18,7 +20,7 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class WelcomeControllerTest < Redmine::ControllerTest
-  fixtures :projects, :news, :users, :members
+  fixtures :projects, :news, :users, :members, :roles, :member_roles, :enabled_modules
 
   def setup
     Setting.default_language = 'en'

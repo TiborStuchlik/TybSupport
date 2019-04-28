@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -81,7 +83,7 @@ module Redmine
                           # below : list unreadable files, but dont link them.
                           :path => utf_8_path,
                           :kind => (File.directory?(t1) ? 'dir' : 'file'),
-                          :size => (File.directory?(t1) ? nil : [File.size(t1)].pack('l').unpack('L').first),
+                          :size => (File.directory?(t1) ? nil : File.size(t1)),
                           :lastrev =>
                               Revision.new({:time => (File.mtime(t1)) })
                         })
@@ -107,7 +109,7 @@ module Redmine
         # Here we do not shell-out, so we do not want quotes.
         def target(path=nil)
           # Prevent the use of ..
-          if path and !path.match(/(^|\/)\.\.(\/|$)/)
+          if path and !/(^|\/)\.\.(\/|$)/.match?(path)
             return "#{self.url}#{without_leading_slash(path)}"
           end
           return self.url

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -87,13 +89,14 @@ module Redmine
     private
 
     def normalize!
+      self.reject! {|s| s.first.blank? }
       self.collect! {|s| s = Array(s); [s.first, (s.last == false || s.last.to_s == 'desc') ? 'desc' : 'asc']}
       self.replace self.first(3)
     end
 
     # Appends ASC/DESC to the sort criterion unless it has a fixed order
     def append_order(criterion, order)
-      if criterion =~ / (asc|desc)$/i
+      if / (asc|desc)$/i.match?(criterion)
         criterion
       else
         Arel.sql "#{criterion} #{order.to_s.upcase}"

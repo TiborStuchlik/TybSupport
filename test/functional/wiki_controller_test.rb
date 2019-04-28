@@ -1,5 +1,5 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -174,6 +174,16 @@ class WikiControllerTest < Redmine::ControllerTest
     get :show, :params => {:project_id => 1, :id => 'NoContent'}
     assert_response :success
     assert_select 'textarea[name=?]', 'content[text]'
+  end
+
+  def test_show_protected_page_shoud_show_locked_badge
+    @request.session[:user_id] = 2
+
+    get :show, :params => {:project_id => 1, :id => 'CookBook_documentation'}
+
+    assert_select 'p.wiki-update-info' do
+      assert_select 'span.badge.badge-status-locked'
+    end
   end
 
   def test_get_new
@@ -1181,5 +1191,18 @@ class WikiControllerTest < Redmine::ControllerTest
     end
     attachment = Attachment.order('id DESC').first
     assert_equal Wiki.find(1).find_page('CookBook_documentation'), attachment.container
+  end
+
+  def test_old_version_should_have_robot_exclusion_tag
+    @request.session[:user_id] = 2
+    # Discourage search engines from indexing old versions
+    get :show, :params => {:project_id => 'ecookbook', :id => 'CookBook_documentation', :version => '2'}
+    assert_response :success
+    assert_select 'head>meta[name="robots"][content=?]', 'noindex,follow,noarchive'
+
+    # No robots meta tag in the current version
+    get :show, :params => {:project_id => 'ecookbook', :id => 'CookBook_documentation'}
+    assert_response :success
+    assert_select 'head>meta[name="robots"]', false
   end
 end

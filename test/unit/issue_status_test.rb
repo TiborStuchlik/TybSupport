@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -27,6 +29,10 @@ class IssueStatusTest < ActiveSupport::TestCase
            :enumerations,
            :issues, :journals, :journal_details,
            :custom_fields, :custom_fields_projects, :custom_fields_trackers, :custom_values
+
+  def setup
+    User.current = nil
+  end
 
   def test_create
     status = IssueStatus.new :name => "Assigned"

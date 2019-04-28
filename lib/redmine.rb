@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -100,6 +102,7 @@ Redmine::AccessControl.map do |map|
                                   :read => true
     map.permission :add_issues, {:issues => [:new, :create], :attachments => :upload}
     map.permission :edit_issues, {:issues => [:edit, :update, :bulk_edit, :bulk_update], :journals => [:new], :attachments => :upload}
+    map.permission :edit_own_issues, {:issues => [:edit, :update, :bulk_edit, :bulk_update], :journals => [:new], :attachments => :upload}
     map.permission :copy_issues, {:issues => [:new, :create, :bulk_edit, :bulk_update], :attachments => :upload}
     map.permission :manage_issue_relations, {:issue_relations => [:index, :show, :create, :destroy]}
     map.permission :manage_subtasks, {}
@@ -126,6 +129,7 @@ Redmine::AccessControl.map do |map|
     map.permission :edit_time_entries, {:timelog => [:edit, :update, :destroy, :bulk_edit, :bulk_update]}, :require => :member
     map.permission :edit_own_time_entries, {:timelog => [:edit, :update, :destroy,:bulk_edit, :bulk_update]}, :require => :loggedin
     map.permission :manage_project_activities, {:projects => :settings, :project_enumerations => [:update, :destroy]}, :require => :member
+    map.permission :log_time_for_other_users, :require => :member
   end
 
   map.project_module :news do |map|
@@ -206,17 +210,17 @@ Redmine::MenuManager.map :application_menu do |menu|
     :caption => :label_project_plural
   menu.push :activity, {:controller => 'activities', :action => 'index'}
   menu.push :issues,   {:controller => 'issues', :action => 'index'},
-    :if => Proc.new {User.current.allowed_to?(:view_issues, nil, :global => true)},
+    :if => Proc.new {User.current.allowed_to?(:view_issues, nil, :global => true) && EnabledModule.exists?(:project => Project.visible, :name => :issue_tracking)},
     :caption => :label_issue_plural
   menu.push :time_entries, {:controller => 'timelog', :action => 'index'},
-    :if => Proc.new {User.current.allowed_to?(:view_time_entries, nil, :global => true)},
+    :if => Proc.new {User.current.allowed_to?(:view_time_entries, nil, :global => true) && EnabledModule.exists?(:project => Project.visible, :name => :time_tracking)},
     :caption => :label_spent_time
   menu.push :gantt, { :controller => 'gantts', :action => 'show' }, :caption => :label_gantt,
-    :if => Proc.new {User.current.allowed_to?(:view_gantt, nil, :global => true)}
+    :if => Proc.new {User.current.allowed_to?(:view_gantt, nil, :global => true) && EnabledModule.exists?(:project => Project.visible, :name => :gantt)}
   menu.push :calendar, { :controller => 'calendars', :action => 'show' }, :caption => :label_calendar,
-    :if => Proc.new {User.current.allowed_to?(:view_calendar, nil, :global => true)}
+    :if => Proc.new {User.current.allowed_to?(:view_calendar, nil, :global => true) && EnabledModule.exists?(:project => Project.visible, :name => :calendar)}
   menu.push :news, {:controller => 'news', :action => 'index'},
-    :if => Proc.new {User.current.allowed_to?(:view_news, nil, :global => true)},
+    :if => Proc.new {User.current.allowed_to?(:view_news, nil, :global => true) && EnabledModule.exists?(:project => Project.visible, :name => :news)},
     :caption => :label_news_plural
 end
 

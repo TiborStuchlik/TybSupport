@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -125,7 +127,7 @@ module Redmine
                         ([^<]\S*?)               # url
                         (\/)?                    # slash
                       )
-                      ((?:&gt;)?|[^[:alnum:]_\=\/;\(\)]*?)               # post
+                      ((?:&gt;)?|[^[:alnum:]_\=\/;\(\)\-]*?)             # post
                       (?=<|\s|$)
                      }x unless const_defined?(:AUTO_LINK_RE)
 
@@ -133,7 +135,7 @@ module Redmine
       def auto_link!(text)
         text.gsub!(AUTO_LINK_RE) do
           all, leading, proto, url, post = $&, $1, $2, $3, $6
-          if leading =~ /<a\s/i || leading =~ /![<>=]?/
+          if /<a\s/i.match?(leading) || /![<>=]?/.match?(leading)
             # don't replace URLs that are already linked
             # and URLs prefixed with ! !> !< != (textile images)
             all
@@ -155,7 +157,7 @@ module Redmine
       def auto_mailto!(text)
         text.gsub!(/([\w\.!#\$%\-+.\/]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)+)/) do
           mail = $1
-          if text.match(/<a\b[^>]*>(.*)(#{Regexp.escape(mail)})(.*)<\/a>/)
+          if /<a\b[^>]*>(.*)(#{Regexp.escape(mail)})(.*)<\/a>/.match?(text)
             mail
           else
             %(<a class="email" href="mailto:#{ERB::Util.html_escape mail}">#{ERB::Util.html_escape mail}</a>).html_safe

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -20,8 +22,10 @@ require File.expand_path('../../test_helper', __FILE__)
 class ProjectNestedSetTest < ActiveSupport::TestCase
 
   def setup
+    User.current = nil
     Project.delete_all
     Tracker.delete_all
+    EnabledModule.delete_all
 
     @a = Project.create!(:name => 'A', :identifier => 'projecta')
     @a1 = Project.create!(:name => 'A1', :identifier => 'projecta1')

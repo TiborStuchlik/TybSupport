@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -77,7 +79,7 @@ class Redmine::ApiTest::IssueRelationsTest < Redmine::ApiTest::Base
       delete '/relations/2.xml', :headers => credentials('jsmith')
     end
 
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
     assert_nil IssueRelation.find_by_id(2)
   end

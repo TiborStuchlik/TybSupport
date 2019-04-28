@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -35,6 +37,7 @@ class MemberTest < ActiveSupport::TestCase
   include Redmine::I18n
 
   def setup
+    User.current = nil
     @jsmith = Member.find(1)
   end
 
@@ -85,7 +88,7 @@ class MemberTest < ActiveSupport::TestCase
     member = Member.new(:project_id => 1, :user_id => user.id, :role_ids => [])
     assert !member.save
     assert_include I18n.translate('activerecord.errors.messages.empty'), member.errors[:role]
-    assert_equal "R\xc3\xb4le doit \xc3\xaatre renseign\xc3\xa9(e)".force_encoding('UTF-8'),
+    assert_equal 'Rôle doit être renseigné(e)',
       [member.errors.full_messages].flatten.join
   end
 

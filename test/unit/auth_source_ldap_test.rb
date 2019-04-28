@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -22,6 +24,7 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
   fixtures :auth_sources
 
   def setup
+    User.current = nil
   end
 
   def test_initialize

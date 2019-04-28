@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -28,6 +30,7 @@ class IssueNestedSetConcurrencyTest < ActiveSupport::TestCase
 
   def setup
     skip if sqlite? || mysql?
+    User.current = nil
     CustomField.delete_all
   end
 

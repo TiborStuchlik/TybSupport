@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -24,7 +26,7 @@ module Redmine
     class HtmlFormatter
       def format(result)
         File.open(File.join(output_path, "index.html"), "w") do |file|
-          file.puts template('index').result(binding)
+          file.puts template('index').result(binding).force_encoding('utf-8')
         end
         result.source_files.each do |source_file|
           File.open(File.join(output_path, source_file_result(source_file)), "w") do |file|

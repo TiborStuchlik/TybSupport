@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -19,6 +21,10 @@ require File.expand_path('../../../test_helper', __FILE__)
 
 class Redmine::ApiTest::AuthenticationTest < Redmine::ApiTest::Base
   fixtures :users
+
+  def teardown
+    User.current = nil
+  end
 
   def test_api_should_deny_without_credentials
     get '/users/current.xml'
@@ -106,7 +112,7 @@ class Redmine::ApiTest::AuthenticationTest < Redmine::ApiTest::Base
   end
 
   def test_invalid_utf8_credentials_should_not_trigger_an_error
-    invalid_utf8 = "\x82".force_encoding('UTF-8')
+    invalid_utf8 = "\x82"
     assert !invalid_utf8.valid_encoding?
     assert_nothing_raised do
       get '/users/current.xml', :headers => credentials(invalid_utf8, "foo")

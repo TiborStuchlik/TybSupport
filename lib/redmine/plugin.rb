@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -17,7 +19,10 @@
 
 module Redmine
 
+  # Exception raised when a plugin cannot be found given its id.
   class PluginNotFound < StandardError; end
+
+  # Exception raised when a plugin requirement is not met.
   class PluginRequirementError < StandardError; end
 
   # Base class for Redmine plugins.
@@ -42,10 +47,14 @@ module Redmine
   # In this example, the settings partial will be found here in the plugin directory: <tt>app/views/settings/_settings.rhtml</tt>.
   #
   # When rendered, the plugin settings value is available as the local variable +settings+
+  #
+  # See: http://www.redmine.org/projects/redmine/wiki/Plugin_Tutorial
   class Plugin
+    # Absolute path to the directory where plugins are located
     cattr_accessor :directory
     self.directory = File.join(Rails.root, 'plugins')
 
+    # Absolute path to the plublic directory where plugins assets are copied
     cattr_accessor :public_directory
     self.public_directory = File.join(Rails.root, 'public', 'plugin_assets')
 
@@ -69,7 +78,17 @@ module Redmine
     def_field :name, :description, :url, :author, :author_url, :version, :settings, :directory
     attr_reader :id
 
-    # Plugin constructor
+    # Plugin constructor: instanciates a new Redmine::Plugin with given +id+
+    # and make it evaluate the given +block+
+    #
+    # Example
+    #   Redmine::Plugin.register :example do
+    #     name 'Example plugin'
+    #     author 'John Smith'
+    #     description 'This is an example plugin for Redmine'
+    #     version '0.0.1'
+    #     requires_redmine version_or_higher: '3.0.0'
+    #   end
     def self.register(id, &block)
       p = new(id)
       p.instance_eval(&block)
@@ -78,6 +97,10 @@ module Redmine
       p.name(id.to_s.humanize) if p.name.nil?
       # Set a default directory if it was not provided during registration
       p.directory(File.join(self.directory, id.to_s)) if p.directory.nil?
+
+      unless File.directory?(p.directory)
+        raise PluginNotFound, "Plugin not found. The directory for plugin #{p.id} should be #{p.directory}."
+      end
 
       # Adds plugin locales if any
       # YAML translation files should be found under <plugin>/config/locales/
@@ -90,11 +113,13 @@ module Redmine
         ActionMailer::Base.prepend_view_path(view_path)
       end
 
-      # Adds the app/{controllers,helpers,models} directories of the plugin to the autoload path
-      Dir.glob File.expand_path(File.join(p.directory, 'app', '{controllers,helpers,models}')) do |dir|
-        ActiveSupport::Dependencies.autoload_paths += [dir]
-        Rails.application.config.eager_load_paths += [dir] if Rails.env == 'production'
-      end
+      # Add the plugin directories to rails autoload paths
+      engine_cfg = Rails::Engine::Configuration.new(p.directory)
+      engine_cfg.paths.add 'lib', eager_load: true
+      Rails.application.config.eager_load_paths += engine_cfg.eager_load_paths
+      Rails.application.config.autoload_once_paths += engine_cfg.autoload_once_paths
+      Rails.application.config.autoload_paths += engine_cfg.autoload_paths
+      ActiveSupport::Dependencies.autoload_paths += engine_cfg.eager_load_paths + engine_cfg.autoload_once_paths + engine_cfg.autoload_paths
 
       # Defines plugin setting if present
       if p.settings
@@ -171,6 +196,7 @@ module Redmine
       id
     end
 
+    # Returns the absolute path to the plugin assets directory
     def assets_directory
       File.join(directory, 'assets')
     end
@@ -249,7 +275,11 @@ module Redmine
       arg = { :version_or_higher => arg } unless arg.is_a?(Hash)
       arg.assert_valid_keys(:version, :version_or_higher)
 
-      plugin = Plugin.find(plugin_name)
+      begin
+        plugin = Plugin.find(plugin_name)
+      rescue PluginNotFound
+        raise PluginRequirementError.new("#{id} plugin requires the #{plugin_name} plugin")
+      end
       current = plugin.version.split('.').collect(&:to_i)
 
       arg.each do |k, v|

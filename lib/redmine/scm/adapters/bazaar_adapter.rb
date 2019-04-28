@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -43,7 +45,7 @@ module Redmine
           end
 
           def scm_command_version
-            scm_version = scm_version_from_command_line.dup.force_encoding('ASCII-8BIT')
+            scm_version = scm_version_from_command_line.b
             if m = scm_version.match(%r{\A(.*?)((\d+\.)+\d+)})
               m[2].scan(%r{\d+}).collect(&:to_i)
             end
@@ -96,8 +98,7 @@ module Redmine
           scm_cmd(*cmd_args) do |io|
             prefix_utf8 = "#{url}/#{path}".tr('\\', '/')
             logger.debug "PREFIX: #{prefix_utf8}"
-            prefix = scm_iconv(@path_encoding, 'UTF-8', prefix_utf8)
-            prefix.force_encoding('ASCII-8BIT')
+            prefix = scm_iconv(@path_encoding, 'UTF-8', prefix_utf8).b
             re = %r{^V\s+(#{Regexp.escape(prefix)})?(\/?)([^\/]+)(\/?)\s+(\S+)\r?$}
             io.each_line do |line|
               next unless line =~ re
@@ -152,7 +153,7 @@ module Redmine
                   parsing = $1
                 elsif line =~ /^  (.*)$/
                   if parsing == 'message'
-                    revision.message << "#{$1}\n"
+                    revision.message += "#{$1}\n"
                   else
                     if $1 =~ /^(.*)\s+(\S+)$/
                       path_locale = $1.strip
@@ -247,18 +248,10 @@ module Redmine
         end
 
         def self.branch_conf_path(path)
-          bcp = nil
+          return if path.nil?
           m = path.match(%r{^(.*[/\\])\.bzr.*$})
-          if m
-            bcp = m[1]
-          else
-            bcp = path
-          end
-          bcp.gsub!(%r{[\/\\]$}, "")
-          if bcp
-            bcp = File.join(bcp, ".bzr", "branch", "branch.conf")
-          end
-          bcp
+          bcp = (m ? m[1] : path).gsub(%r{[\/\\]$}, "")
+          File.join(bcp, ".bzr", "branch", "branch.conf")
         end
 
         def append_revisions_only

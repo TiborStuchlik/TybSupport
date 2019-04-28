@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -56,9 +58,8 @@ module Redmine
             # Comprehensive error message for those who used async_smtp and async_sendmail
             # delivery methods that are removed in Redmine 4.0.
             if k == 'delivery_method' && v.to_s =~ /\Aasync_(.+)/
-              $stderr.puts "Redmine now uses ActiveJob to send emails asynchronously and the :#{v} delivery method is no longer available.\n" +
+              abort "Redmine now uses ActiveJob to send emails asynchronously and the :#{v} delivery method is no longer available.\n" +
                 "Please update your config/configuration.yml to use :#$1 delivery method instead."
-              exit 1
             end
             v.symbolize_keys! if v.respond_to?(:symbolize_keys!)
             ActionMailer::Base.send("#{k}=", v)
@@ -121,7 +122,7 @@ module Redmine
       # Checks the validness of regular expressions set for repository paths at startup
       def check_regular_expressions
         @config.each do |name, value|
-          if value.present? && name =~ /^scm_.+_path_regexp$/
+          if value.present? && /^scm_.+_path_regexp$/.match?(name)
             begin
               Regexp.new value.to_s.strip
             rescue => e

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -20,9 +22,10 @@ require File.expand_path('../../test_helper', __FILE__)
 class JournalObserverTest < ActiveSupport::TestCase
   fixtures :issues, :issue_statuses, :journals, :journal_details, :projects,
            :projects_trackers, :trackers, :enabled_modules, :enumerations,
-           :users, :email_addresses, :roles
+           :users, :email_addresses, :roles, :members, :member_roles
 
   def setup
+    User.current = nil
     ActionMailer::Base.deliveries.clear
     @journal = Journal.find 1
   end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -25,6 +27,7 @@ class NewsTest < ActiveSupport::TestCase
   end
 
   def setup
+    User.current = nil
   end
 
   def test_create_should_send_email_notification

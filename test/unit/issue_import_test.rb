@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -35,6 +37,7 @@ class IssueImportTest < ActiveSupport::TestCase
   include Redmine::I18n
 
   def setup
+    User.current = nil
     set_language_if_valid 'en'
   end
 
@@ -113,6 +116,15 @@ class IssueImportTest < ActiveSupport::TestCase
     assert_nil issues[0].parent
     assert_equal issues[0].id, issues[1].parent_id
     assert_equal 2, issues[2].parent_id
+  end
+
+  def test_import_utf8_with_bom
+    import = generate_import_with_mapping('import_issues_utf8_with_bom.csv')
+    import.settings.merge!('encoding' => 'UTF-8')
+    import.save
+
+    issues = new_records(Issue,3) { import.run }
+    assert_equal 3, issues.count
   end
 
   def test_backward_and_forward_reference_to_parent_should_work
@@ -216,5 +228,17 @@ class IssueImportTest < ActiveSupport::TestCase
 
     import.run
     assert !File.exists?(file_path)
+  end
+
+  def test_run_should_consider_project_shared_versions
+    system_version = Version.generate!(:project_id => 2, :sharing => 'system', :name => '2.1')
+    system_version.save!
+
+    import = generate_import_with_mapping
+    import.mapping.merge!('fixed_version' => '9')
+    import.save!
+
+    issues = new_records(Issue, 3) { import.run }
+    assert [nil, 3, system_version.id], issues.map(&:fixed_version_id)
   end
 end

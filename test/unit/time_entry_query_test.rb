@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -27,6 +29,10 @@ class TimeEntryQueryTest < ActiveSupport::TestCase
            :groups_users,
            :enabled_modules,
            :custom_fields, :custom_fields_trackers, :custom_fields_projects
+
+  def setup
+    User.current = nil
+  end
 
   def test_filter_values_without_project_should_be_arrays
     q = TimeEntryQuery.new

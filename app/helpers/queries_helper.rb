@@ -1,5 +1,5 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -30,7 +30,7 @@ module QueriesHelper
         group = :label_relations
       elsif field_options[:type] == :tree
         group = query.is_a?(IssueQuery) ? :label_relations : nil
-      elsif field =~ /^cf_\d+\./
+      elsif /^cf_\d+\./.match?(field)
         group = (field_options[:through] || field_options[:field]).try(:name)
       elsif field =~ /^(.+)\./
         # association filters
@@ -128,7 +128,7 @@ module QueriesHelper
     items.each do |item|
       group_name = group_count = nil
       if query.grouped?
-        group = query.group_by_column.value(item)
+        group = query.group_by_column.group_value(item)
         if first || group != previous_group
           if group.blank? && group != false
             group_name = "(#{l(:label_blank_value)})"
@@ -290,9 +290,9 @@ module QueriesHelper
     session_key = klass.name.underscore.to_sym
 
     if params[:query_id].present?
-      cond = "project_id IS NULL"
-      cond << " OR project_id = #{@project.id}" if @project
-      @query = klass.where(cond).find(params[:query_id])
+      scope = klass.where(:project_id => nil)
+      scope = scope.or(klass.where(:project_id => @project)) if @project
+      @query = scope.find(params[:query_id])
       raise ::Unauthorized unless @query.visible?
       @query.project = @project
       session[session_key] = {:id => @query.id, :project_id => @query.project_id} if use_session
@@ -389,7 +389,7 @@ module QueriesHelper
     content_tag('h3', title) + "\n" +
       content_tag('ul',
         queries.collect {|query|
-            css = 'query'
+            css = +'query'
             css << ' selected' if query == @query
             content_tag('li', link_to(query.name, url_params.merge(:query_id => query), :class => css))
           }.join("\n").html_safe,

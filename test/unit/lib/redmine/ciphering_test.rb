@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -21,8 +23,9 @@ class Redmine::CipheringTest < ActiveSupport::TestCase
 
   def test_password_should_be_encrypted
     Redmine::Configuration.with 'database_cipher_key' => 'secret' do
-      r = Repository::Subversion.create!(:password => 'foo', :url => 'file:///tmp', :identifier => 'svn')
-      assert_equal 'foo', r.password
+      plaintext_password = "THIS_IS_A_32_BYTES_LONG_PASSWORD"
+      r = Repository::Subversion.create!(:password => plaintext_password, :url => 'file:///tmp', :identifier => 'svn')
+      assert_equal plaintext_password, r.password
       assert r.read_attribute(:password).match(/\Aaes-256-cbc:.+\Z/)
     end
   end

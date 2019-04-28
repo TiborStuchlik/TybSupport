@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -26,6 +28,7 @@ class AttachmentFormatVisibilityTest < ActionView::TestCase
            :versions, :issues
 
   def setup
+    User.current = nil
     set_tmp_attachments_directory
   end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -20,6 +22,10 @@ require 'redmine/field_format'
 
 class Redmine::NumericFieldFormatTest < ActionView::TestCase
   include ApplicationHelper
+
+  def setup
+    User.current = nil
+  end
 
   def test_integer_field_with_url_pattern_should_format_as_link
     field = IssueCustomField.new(:field_format => 'int', :url_pattern => 'http://foo/%value%')

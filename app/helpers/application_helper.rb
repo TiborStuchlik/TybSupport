@@ -1,5 +1,5 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -60,6 +60,20 @@ module ApplicationHelper
       end
     else
       h(user.to_s)
+    end
+  end
+
+  # Displays a link to edit group page if current user is admin
+  # Otherwise display only the group name
+  def link_to_group(group, options={})
+    if group.is_a?(Group)
+      name = h(group.name)
+      if (User.current.admin?)
+        only_path = options[:only_path].nil? ? true : options[:only_path]
+        link_to name, edit_group_path(group, :only_path => only_path)
+      else
+        name
+      end
     end
   end
 
@@ -278,7 +292,7 @@ module ApplicationHelper
   end
 
   def toggle_link(name, id, options={})
-    onclick = "$('##{id}').toggle(); "
+    onclick = +"$('##{id}').toggle(); "
     onclick << (options[:focus] ? "$('##{options[:focus]}').focus(); " : "this.blur(); ")
     onclick << "$(window).scrollTop($('##{options[:focus]}').position().top); " if options[:scroll]
     onclick << "return false;"
@@ -322,7 +336,7 @@ module ApplicationHelper
   # The given collection may be a subset of the whole project tree
   # (eg. some intermediate nodes are private and can not be seen)
   def render_project_nested_lists(projects, &block)
-    s = ''
+    s = +''
     if projects.any?
       ancestors = []
       original_project = @project
@@ -352,7 +366,7 @@ module ApplicationHelper
   end
 
   def render_page_hierarchy(pages, node=nil, options={})
-    content = ''
+    content = +''
     if pages[node]
       content << "<ul class=\"pages-hierarchy\">\n"
       pages[node].each do |page|
@@ -369,7 +383,7 @@ module ApplicationHelper
 
   # Renders flash messages
   def render_flash_messages
-    s = ''
+    s = +''
     flash.each do |k,v|
       s << content_tag('div', v.html_safe, :class => "flash #{k}", :id => "flash_#{k}")
     end
@@ -408,7 +422,7 @@ module ApplicationHelper
 
   def render_projects_for_jump_box(projects, selected=nil)
     jump = params[:jump].presence || current_menu_item
-    s = ''.html_safe
+    s = (+'').html_safe
     project_tree(projects) do |project, level|
       padding = level * 16
       text = content_tag('span', project.name, :style => "padding-left:#{padding}px;")
@@ -469,7 +483,7 @@ module ApplicationHelper
   end
 
   def principals_check_box_tags(name, principals)
-    s = ''
+    s = +''
     principals.each do |principal|
       s << "<label>#{ check_box_tag name, principal.id, false, :id => nil } #{h principal}</label>\n"
     end
@@ -478,11 +492,11 @@ module ApplicationHelper
 
   # Returns a string for users/groups option tags
   def principals_options_for_select(collection, selected=nil)
-    s = ''
+    s = +''
     if collection.include?(User.current)
       s << content_tag('option', "<< #{l(:label_me)} >>", :value => User.current.id)
     end
-    groups = ''
+    groups = +''
     collection.sort.each do |element|
       selected_attribute = ' selected="selected"' if option_value_selected?(element, selected) || element.id.to_s == selected
       (element.is_a?(Group) ? groups : s) << %(<option value="#{element.id}"#{selected_attribute}>#{h element.name}</option>)
@@ -623,6 +637,17 @@ module ApplicationHelper
     end
   end
 
+  def actions_dropdown(&block)
+    content = capture(&block)
+    if content.present?
+      trigger = content_tag('span', l(:button_actions), :class => 'icon-only icon-actions', :title => l(:button_actions))
+      trigger = content_tag('span', trigger, :class => 'drdn-trigger')
+      content = content_tag('div', content, :class => 'drdn-items')
+      content = content_tag('div', content, :class => 'drdn-content')
+      content_tag('span', trigger + content, :class => 'drdn')
+    end
+  end
+
   # Returns the theme, controller name, and action as css classes for the
   # HTML body.
   def body_css_classes
@@ -703,7 +728,7 @@ module ApplicationHelper
   def parse_non_pre_blocks(text, obj, macros)
     s = StringScanner.new(text)
     tags = []
-    parsed = ''
+    parsed = +''
     while !s.eos?
       s.scan(/(.*?)(<(\/)?(pre|code)(.*?)>|\z)/im)
       text, full_tag, closing, tag = s[1], s[2], s[3], s[4]
@@ -749,7 +774,7 @@ module ApplicationHelper
     attachments += obj.attachments if obj.respond_to?(:attachments)
     if attachments.present?
       text.gsub!(/src="([^\/"]+\.(bmp|gif|jpg|jpe|jpeg|png))"(\s+alt="([^"]*)")?/i) do |m|
-        filename, ext, alt, alttext = $1.downcase, $2, $3, $4
+        filename, ext, alt, alttext = $1, $2, $3, $4
         # search for the picture in attachments
         if found = Attachment.latest_attach(attachments, CGI.unescape(filename))
           image_url = download_named_attachment_url(found, found.filename, :only_path => only_path)
@@ -776,7 +801,7 @@ module ApplicationHelper
   #   [[project:mypage]]
   #   [[project:mypage|mytext]]
   def parse_wiki_links(text, project, obj, attr, only_path, options)
-    text.gsub!(/(!)?(\[\[([^\]\n\|]+)(\|([^\]\n\|]+))?\]\])/) do |m|
+    text.gsub!(/(!)?(\[\[([^\n\|]+?)(\|([^\n\|]+?))?\]\])/) do |m|
       link_project = project
       esc, all, page, title = $1, $2, $3, $5
       if esc.nil?
@@ -938,6 +963,8 @@ module ApplicationHelper
                           :class => issue.css_classes,
                           :title => "#{issue.tracker.name}: #{issue.subject.truncate(100)} (#{issue.status.name})")
                 end
+              elsif identifier == 'note'
+                link = link_to("#note-#{comment_id}", "#note-#{comment_id}")
               end
             when 'document'
               if document = Document.visible.find_by_id(oid)
@@ -1055,7 +1082,7 @@ module ApplicationHelper
                 )
               )
               (
-                (?<identifier1>\d+)
+                (?<identifier1>((\d)+|(note)))
                 (?<comment_suffix>
                   (\#note)?
                   -(?<comment_id>\d+)
@@ -1183,10 +1210,10 @@ module ApplicationHelper
       if headings.empty?
         ''
       else
-        div_class = 'toc'
+        div_class = +'toc'
         div_class << ' right' if right_align
         div_class << ' left' if left_align
-        out = "<ul class=\"#{div_class}\"><li><strong>#{l :label_table_of_contents}</strong></li><li>"
+        out = +"<ul class=\"#{div_class}\"><li><strong>#{l :label_table_of_contents}</strong></li><li>"
         root = headings.map(&:first).min
         current = root
         started = false
@@ -1247,7 +1274,7 @@ module ApplicationHelper
 
   # Renders a list of error messages
   def render_error_messages(errors)
-    html = ""
+    html = +""
     if errors.present?
       html << "<div id='errorExplanation'><ul>\n"
       errors.each do |error|
@@ -1491,7 +1518,7 @@ module ApplicationHelper
 
   # Returns the javascript tags that are included in the html layout head
   def javascript_heads
-    tags = javascript_include_tag('jquery-1.11.1-ui-1.11.0-ujs-4.3.1', 'application', 'responsive')
+    tags = javascript_include_tag('jquery-1.11.1-ui-1.11.0-ujs-5.2.3', 'application', 'responsive')
     unless User.current.pref.warn_on_leaving_unsaved == '0'
       tags << "\n".html_safe + javascript_tag("$(window).load(function(){ warnLeavingUnsaved('#{escape_javascript l(:text_warn_on_leaving_unsaved)}'); });")
     end
@@ -1540,11 +1567,6 @@ module ApplicationHelper
     else
       options
     end
-  end
-
-  def generate_csv(&block)
-    decimal_separator = l(:general_csv_decimal_separator)
-    encoding = l(:general_csv_encoding)
   end
 
   def export_csv_encoding_select_tag

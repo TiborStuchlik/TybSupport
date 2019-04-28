@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -41,10 +43,8 @@ class MailHandler < ActionMailer::Base
     options[:no_notification] = (options[:no_notification].to_s == '1')
     options[:no_permission_check] = (options[:no_permission_check].to_s == '1')
 
-    raw_mail.force_encoding('ASCII-8BIT')
-
     ActiveSupport::Notifications.instrument("receive.action_mailer") do |payload|
-      mail = Mail.new(raw_mail)
+      mail = Mail.new(raw_mail.b)
       set_payload_for_mail(payload, mail)
       new.receive(mail, options)
     end
@@ -54,7 +54,7 @@ class MailHandler < ActionMailer::Base
   def self.safe_receive(*args)
     receive(*args)
   rescue Exception => e
-    logger.error "MailHandler: an unexpected error occurred when receiving email: #{e.message}" if logger
+    Rails.logger.error "MailHandler: an unexpected error occurred when receiving email: #{e.message}"
     return false
   end
 
@@ -91,10 +91,9 @@ class MailHandler < ActionMailer::Base
     @handler_options = options
     sender_email = email.from.to_a.first.to_s.strip
     # Ignore emails received from the application emission address to avoid hell cycles
-    if sender_email.casecmp(Setting.mail_from.to_s.strip) == 0
-      if logger
-        logger.info  "MailHandler: ignoring email from Redmine emission address [#{sender_email}]"
-      end
+    emission_address = Setting.mail_from.to_s.gsub(/(?:.*<|>.*|\(.*\))/, '').strip
+    if sender_email.casecmp(emission_address) == 0
+      logger&.info "MailHandler: ignoring email from Redmine emission address [#{sender_email}]"
       return false
     end
     # Ignore auto generated emails
@@ -102,19 +101,15 @@ class MailHandler < ActionMailer::Base
       value = email.header[key]
       if value
         value = value.to_s.downcase
-        if (ignored_value.is_a?(Regexp) && value.match(ignored_value)) || value == ignored_value
-          if logger
-            logger.info "MailHandler: ignoring email with #{key}:#{value} header"
-          end
+        if (ignored_value.is_a?(Regexp) && ignored_value.match?(value)) || value == ignored_value
+          logger&.info "MailHandler: ignoring email with #{key}:#{value} header"
           return false
         end
       end
     end
     @user = User.find_by_mail(sender_email) if sender_email.present?
     if @user && !@user.active?
-      if logger
-        logger.info  "MailHandler: ignoring email from non-active user [#{@user.login}]"
-      end
+      logger&.info "MailHandler: ignoring email from non-active user [#{@user.login}]"
       return false
     end
     if @user.nil?
@@ -125,24 +120,18 @@ class MailHandler < ActionMailer::Base
       when 'create'
         @user = create_user_from_email
         if @user
-          if logger
-            logger.info "MailHandler: [#{@user.login}] account created"
-          end
+          logger&.info "MailHandler: [#{@user.login}] account created"
           add_user_to_group(handler_options[:default_group])
           unless handler_options[:no_account_notice]
             ::Mailer.deliver_account_information(@user, @user.password)
           end
         else
-          if logger
-            logger.error "MailHandler: could not create account for [#{sender_email}]"
-          end
+          logger&.error "MailHandler: could not create account for [#{sender_email}]"
           return false
         end
       else
         # Default behaviour, emails from unknown users are ignored
-        if logger
-          logger.info  "MailHandler: ignoring email from unknown user [#{sender_email}]"
-        end
+        logger&.info "MailHandler: ignoring email from unknown user [#{sender_email}]"
         return false
       end
     end
@@ -176,13 +165,13 @@ class MailHandler < ActionMailer::Base
     end
   rescue ActiveRecord::RecordInvalid => e
     # TODO: send a email to the user
-    logger.error "MailHandler: #{e.message}" if logger
+    logger&.error "MailHandler: #{e.message}"
     false
   rescue MissingInformation => e
-    logger.error "MailHandler: missing information from #{user}: #{e.message}" if logger
+    logger&.error "MailHandler: missing information from #{user}: #{e.message}"
     false
   rescue UnauthorizedAction => e
-    logger.error "MailHandler: unauthorized attempt from #{user}" if logger
+    logger&.error "MailHandler: unauthorized attempt from #{user}"
     false
   end
 
@@ -220,7 +209,7 @@ class MailHandler < ActionMailer::Base
     add_watchers(issue)
     issue.save!
     add_attachments(issue)
-    logger.info "MailHandler: issue ##{issue.id} created by #{user}" if logger
+    logger&.info "MailHandler: issue ##{issue.id} created by #{user}"
     issue
   end
 
@@ -237,7 +226,7 @@ class MailHandler < ActionMailer::Base
     end
 
     # ignore CLI-supplied defaults for new issues
-    handler_options[:issue].clear
+    handler_options[:issue] = {}
 
     journal = issue.init_journal(user)
     if from_journal && from_journal.private_notes?
@@ -250,11 +239,9 @@ class MailHandler < ActionMailer::Base
 
     # add To and Cc as watchers before saving so the watchers can reply to Redmine
     add_watchers(issue)
-    add_attachments(issue)
     issue.save!
-    if logger
-      logger.info "MailHandler: issue ##{issue.id} updated by #{user}"
-    end
+    add_attachments(issue)
+    logger&.info "MailHandler: issue ##{issue.id} updated by #{user}"
     journal
   end
 
@@ -285,9 +272,7 @@ class MailHandler < ActionMailer::Base
         add_attachments(reply)
         reply
       else
-        if logger
-          logger.info "MailHandler: ignoring reply from [#{sender_email}] to a locked topic"
-        end
+        logger&.info "MailHandler: ignoring reply from [#{sender_email}] to a locked topic"
       end
     end
   end
@@ -315,7 +300,7 @@ class MailHandler < ActionMailer::Base
       else
         regexp = %r{\A#{Regexp.escape(pattern).gsub("\\*", ".*")}\z}i
       end
-      if attachment.filename.to_s =~ regexp
+      if regexp.match?(attachment.filename.to_s)
         logger.info "MailHandler: ignoring attachment #{attachment.filename} matching #{pattern}"
         return false
       end
@@ -446,16 +431,23 @@ class MailHandler < ActionMailer::Base
     end
   end
 
-  # Returns the text/plain part of the email
-  # If not found (eg. HTML-only email), returns the body with tags removed
+  # Returns the text content of the email. 
+  # If the value of Setting.mail_handler_preferred_body_part is 'html',
+  # it returns text converted from the text/html part of the email.
+  # Otherwise, it returns text/plain part.
   def plain_text_body
     return @plain_text_body unless @plain_text_body.nil?
 
-    # check if we have any plain-text parts with content
-    @plain_text_body = email_parts_to_text(email.all_parts.select {|p| p.mime_type == 'text/plain'}).presence
-
-    # if not, we try to parse the body from the HTML-parts
-    @plain_text_body ||= email_parts_to_text(email.all_parts.select {|p| p.mime_type == 'text/html'}).presence
+    parse_order =
+      if Setting.mail_handler_preferred_body_part == 'html'
+        ['text/html', 'text/plain']
+      else
+        ['text/plain', 'text/html']
+      end
+    parse_order.each do |mime_type|
+      @plain_text_body ||= email_parts_to_text(email.all_parts.select {|p| p.mime_type == mime_type}).presence
+      return @plain_text_body unless @plain_text_body.nil?
+    end
 
     # If there is still no body found, and there are no mime-parts defined,
     # we use the whole raw mail body
@@ -536,12 +528,9 @@ class MailHandler < ActionMailer::Base
   # Creates a User for the +email+ sender
   # Returns the user or nil if it could not be created
   def create_user_from_email
-    from = email.header['from'].to_s
-    addr, name = from, nil
-    if m = from.match(/^"?(.+?)"?\s+<(.+@.+)>$/)
-      addr, name = m[2], m[1]
-    end
-    if addr.present?
+    if from_addr = email.header['from'].try(:addrs).to_a.first
+      addr = from_addr.address
+      name = from_addr.display_name || from_addr.comments.to_a.first
       user = self.class.new_user_from_attributes(addr, name)
       if handler_options[:no_notification]
         user.mail_notification = 'none'
@@ -549,11 +538,11 @@ class MailHandler < ActionMailer::Base
       if user.save
         user
       else
-        logger.error "MailHandler: failed to create User: #{user.errors.full_messages}" if logger
+        logger&.error "MailHandler: failed to create User: #{user.errors.full_messages}"
         nil
       end
     else
-      logger.error "MailHandler: failed to create User: no FROM address found" if logger
+      logger&.error "MailHandler: failed to create User: no FROM address found"
       nil
     end
   end
@@ -579,7 +568,7 @@ class MailHandler < ActionMailer::Base
       begin
         delimiters = delimiters.map {|s| Regexp.new(s)}
       rescue RegexpError => e
-        logger.error "MailHandler: invalid regexp delimiter found in mail_handler_body_delimiters setting (#{e.message})" if logger
+        logger&.error "MailHandler: invalid regexp delimiter found in mail_handler_body_delimiters setting (#{e.message})"
       end
     end
 

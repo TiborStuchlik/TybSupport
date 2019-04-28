@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -21,12 +23,11 @@ module Redmine
   module Views
     module Builders
       class Structure < BlankSlate
-        attr_accessor :request, :response
 
         def initialize(request, response)
           @struct = [{}]
-          self.request = request
-          self.response = response
+          @request = request
+          @response = response
         end
 
         def array(tag, options={}, &block)
@@ -48,7 +49,7 @@ module Redmine
         end
 
         def method_missing(sym, *args, &block)
-          if args.any?
+          if args.count > 0
             if args.first.is_a?(Hash)
               if @struct.last.is_a?(Array)
                 @struct.last << args.first unless block

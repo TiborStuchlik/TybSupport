@@ -210,6 +210,7 @@ bg:
   error_unable_to_connect: Невъзможност за свързване с (%{value})
   error_attachment_too_big: Този файл не може да бъде качен, понеже надхвърля максималната възможна големина (%{max_size})
   error_session_expired: Вашата сесия е изтекла. Моля влезете в Redmine отново.
+  error_token_expired: Връзката за възстановяване на паролата вече е невалидна. Опитайте отново.
   warning_attachments_not_saved: "%{count} файла не бяха записани."
   error_password_expired: Вашата парола е с изтекъл срок или администраторът изисква да я смените.
   error_invalid_file_encoding: Файлът няма валидно %{encoding} кодиране.
@@ -223,6 +224,8 @@ bg:
   error_cannot_reassign_time_entries_to_an_issue_about_to_be_deleted: Употребеното време не може да бъде прехвърлено на задача, която ще бъде изтрита
   warning_fields_cleared_on_bulk_edit: Промените ще предизвикат автоматично изтриване на стойности от едно или повече полета на избраните обекти
   error_exceeds_maximum_hours_per_day: Не можете да запишете повече от %{max_hours} часа на един ден (%{logged_hours} часове вече са записани)
+  error_spent_on_future_date: Не е възможно да се отчете изразходвано време на дата в бъдещето
+  error_not_allowed_to_log_time_for_other_users: Вие нямате разрешение да записвате изразходвано време за други потребители
 
   mail_subject_lost_password: "Вашата парола (%{value})"
   mail_body_lost_password: 'За да смените паролата си, използвайте следния линк:'
@@ -419,6 +422,7 @@ bg:
   setting_mail_handler_enable_regex: Разрешаванен на регулярни изрази
   setting_mail_handler_api_enabled: Разрешаване на WS за входящи e-mail-и
   setting_mail_handler_api_key: API ключ за входящи e-mail-и
+  setting_mail_handler_preferred_body_part: Предпочитана част от multipart (HTML) имейли
   setting_sys_api_key: API ключ за хранилища
   setting_sequential_project_identifiers: Генериране на последователни проектни идентификатори
   setting_gravatar_enabled: Използване на портребителски икони от Gravatar
@@ -468,6 +472,8 @@ bg:
   setting_time_entry_list_defaults: Конфигурация по подразбиране за записите за изразходваното време
   setting_timelog_accept_0_hours: Приемане на записи с 0 часа
   setting_timelog_max_hours_per_day: Максимум часове, които могат да бъдат записани за ден и за потребител
+  setting_timelog_accept_future_dates: Разрешено отчитане на изразходвано време на дата в бъдещето
+  setting_show_status_changes_in_mail_subject: Показване на промените на състоянието на задачите в поле Относно на имейлите
 
   permission_add_project: Създаване на проект
   permission_add_subprojects: Създаване на подпроекти
@@ -534,6 +540,7 @@ bg:
   permission_manage_subtasks: Управление на подзадачите
   permission_manage_related_issues: Управление на връзките между задачи и ревизии
   permission_import_issues: Импорт на задачи
+  permission_log_time_for_other_users: Записване на изразходвано време за други потребители
 
   project_module_issue_tracking: Тракинг
   project_module_time_tracking: Отделяне на време
@@ -736,14 +743,16 @@ bg:
   label_between: между
   label_in: в следващите
   label_today: днес
-  label_all_time: всички
   label_yesterday: вчера
+  label_tomorrow: утре
   label_this_week: тази седмица
   label_last_week: последната седмица
+  label_next_week: следващата седмица
   label_last_n_weeks: последните %{count} седмици
   label_last_n_days: "последните %{count} дни"
   label_this_month: текущия месец
   label_last_month: последния месец
+  label_next_month: следващият месец
   label_this_year: текущата година
   label_date_range: Период
   label_less_than_ago: преди по-малко от
@@ -827,6 +836,7 @@ bg:
   label_relation_new: Нова релация
   label_relation_delete: Изтриване на релация
   label_relates_to: свързана със
+  label_delete_link_to_subtask: Изтриване на релация
   label_duplicates: дублира
   label_duplicated_by: дублирана от
   label_blocks: блокира
@@ -892,7 +902,11 @@ bg:
   label_general: Основни
   label_scm: SCM (Система за контрол на версиите)
   label_plugins: Плъгини
+  label_ldap: LDAP
   label_ldap_authentication: LDAP удостоверяване
+  label_ldaps_verify_none: LDAP удостоверяване
+  label_ldaps_verify_peer: LDAPS
+  label_ldaps_warning: Препоръчително е да се използва криптирана LDAPS връзка със сертификат за предотвратяване на намеса по време на процеса на удостоверяване.
   label_downloads_abbr: D/L
   label_optional_description: Незадължително описание
   label_add_another_file: Добавяне на друг файл
@@ -1027,6 +1041,11 @@ bg:
   label_font_proportional: Пропорционален шрифт
   label_last_notes: Последни коментари
   label_nothing_to_preview: Няма нищо за предварителен преглед
+  label_inherited_from_parent_project: Наследени от родителския проект
+  label_inherited_from_group: Наследени от група %{name}
+  label_trackers_description: Описание на тракерите
+  label_open_trackers_description: Показване на описанията на всички тракери
+  label_preferred_body_part_html: HTML (експериментално)
 
   button_login: Вход
   button_submit: Изпращане
@@ -1117,6 +1136,8 @@ bg:
   text_caracters_minimum: "Минимум %{count} символа."
   text_length_between: "От %{min} до %{max} символа."
   text_tracker_no_workflow: Няма дефиниран работен процес за този тракер
+  text_role_no_workflow: Няма дефиниран работен процес за тази роля
+  text_status_no_workflow: Нито един тракер не използва това състояние в работен процес
   text_unallowed_characters: Непозволени символи
   text_comma_separated: Позволено е изброяване (с разделител запетая).
   text_line_separated: Позволени са много стойности (по едно на ред).
@@ -1227,8 +1248,6 @@ bg:
   label_login_required_no: Не, разрешаване на анонимен достъп до публичните проекти.
   text_project_is_public_non_member: Публичните проекти са достъпни за всички влезли в Redmine потребители.
   text_project_is_public_anonymous: Публичните проекти са достъпнии тяхното съдържание са видими без ограничения в мрежата.
-  label_ldap: LDAP
-  label_ldaps_verify_none: LDAP удостоверяване
-  label_ldaps_verify_peer: LDAPS
-  label_ldaps_warning: препоръчително е да се използва криптирана LDAPS връзка със сертификат за предотвратяване на намеса по време на процеса на удостоверяване.
-  error_token_expired: This password recovery link has expired, please try again.
+  label_preferred_body_part_text: Text
+  field_parent_issue_subject: Parent task subject
+  permission_edit_own_issues: Edit own issues

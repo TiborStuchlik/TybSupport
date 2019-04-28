@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -112,7 +114,7 @@ class ApplicationController < ActionController::Base
       if (key = api_key_from_request)
         # Use API key
         user = User.find_by_api_key(key)
-      elsif request.authorization.to_s =~ /\ABasic /i
+      elsif /\ABasic /i.match?(request.authorization.to_s)
         # HTTP Basic, either username/password or API key/random
         authenticate_with_http_basic do |username, password|
           user = User.try_to_login(username, password) || User.find_by_api_key(username)
@@ -229,9 +231,14 @@ class ApplicationController < ActionController::Base
         format.any(:atom, :pdf, :csv) {
           redirect_to signin_path(:back_url => url)
         }
-        format.xml  { head :unauthorized, 'WWW-Authenticate' => 'Basic realm="Redmine API"' }
+        format.api  {
+          if Setting.rest_api_enabled? && accept_api_auth?
+            head(:unauthorized, 'WWW-Authenticate' => 'Basic realm="Redmine API"')
+          else
+            head(:forbidden)
+          end
+        }
         format.js   { head :unauthorized, 'WWW-Authenticate' => 'Basic realm="Redmine API"' }
-        format.json { head :unauthorized, 'WWW-Authenticate' => 'Basic realm="Redmine API"' }
         format.any  { head :unauthorized }
       end
       return false
@@ -259,6 +266,7 @@ class ApplicationController < ActionController::Base
       true
     else
       if @project && @project.archived?
+        @archived_project = @project
         render_403 :message => :notice_not_authorized_archived_project
       elsif @project && !@project.allows_to?(:controller => ctrl, :action => action)
         # Project module is disabled
@@ -438,11 +446,11 @@ class ApplicationController < ActionController::Base
     path = uri.to_s
     # Ensure that the remaining URL starts with a slash, followed by a
     # non-slash character or the end
-    if path !~ %r{\A/([^/]|\z)}
+    if !%r{\A/([^/]|\z)}.match?(path)
       return false
     end
 
-    if path.match(%r{/(login|account/register|account/lost_password)})
+    if %r{/(login|account/register|account/lost_password)}.match?(path)
       return false
     end
 
@@ -623,7 +631,7 @@ class ApplicationController < ActionController::Base
 
   # Returns a string that can be used as filename value in Content-Disposition header
   def filename_for_content_disposition(name)
-    request.env['HTTP_USER_AGENT'] =~ %r{(MSIE|Trident|Edge)} ? ERB::Util.url_encode(name) : name
+    %r{(MSIE|Trident|Edge)}.match?(request.env['HTTP_USER_AGENT']) ? ERB::Util.url_encode(name) : name
   end
 
   def api_request?
@@ -656,9 +664,9 @@ class ApplicationController < ActionController::Base
     render_error "An error occurred while executing the query and has been logged. Please report this error to your Redmine administrator."
   end
 
-  # Renders a 200 response for successful updates or deletions via the API
+  # Renders a 204 response for successful updates or deletions via the API
   def render_api_ok
-    render_api_head :ok
+    render_api_head :no_content
   end
 
   # Renders a head API response

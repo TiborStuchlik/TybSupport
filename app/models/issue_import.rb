@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -122,7 +124,10 @@ class IssueImport < Import
       end
     end
     if issue.project && version_name = row_value(row, 'fixed_version')
-      if version = issue.project.versions.named(version_name).first
+      version =
+        issue.project.versions.named(version_name).first ||
+        issue.project.shared_versions.named(version_name).first
+      if version
         attributes['fixed_version_id'] = version.id
       elsif create_versions?
         version = issue.project.versions.build

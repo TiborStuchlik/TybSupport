@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -18,6 +20,8 @@
 class PrincipalMembershipsController < ApplicationController
   layout 'admin'
   self.main_menu = false
+
+  helper :members
 
   before_action :require_admin
   before_action :find_principal, :only => [:new, :create]

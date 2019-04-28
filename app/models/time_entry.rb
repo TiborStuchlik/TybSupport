@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -22,6 +24,7 @@ class TimeEntry < ActiveRecord::Base
   belongs_to :project
   belongs_to :issue
   belongs_to :user
+  belongs_to :author, :class_name => 'User'
   belongs_to :activity, :class_name => 'TimeEntryActivity'
 
   acts_as_customizable
@@ -39,13 +42,14 @@ class TimeEntry < ActiveRecord::Base
                             :author_key => :user_id,
                             :scope => joins(:project).preload(:project)
 
-  validates_presence_of :user_id, :activity_id, :project_id, :hours, :spent_on
+  validates_presence_of :author_id, :user_id, :activity_id, :project_id, :hours, :spent_on
   validates_presence_of :issue_id, :if => lambda { Setting.timelog_required_fields.include?('issue_id') }
   validates_presence_of :comments, :if => lambda { Setting.timelog_required_fields.include?('comments') }
   validates_numericality_of :hours, :allow_nil => true, :message => :invalid
   validates_length_of :comments, :maximum => 1024, :allow_nil => true
   validates :spent_on, :date => true
   before_validation :set_project_if_nil
+  before_validation :set_author_if_nil
   validate :validate_time_entry
 
   scope :visible, lambda {|*args|
@@ -60,7 +64,7 @@ class TimeEntry < ActiveRecord::Base
     where("#{Issue.table_name}.root_id = #{issue.root_id} AND #{Issue.table_name}.lft >= #{issue.lft} AND #{Issue.table_name}.rgt <= #{issue.rgt}")
   }
 
-  safe_attributes 'hours', 'comments', 'project_id', 'issue_id', 'activity_id', 'spent_on', 'custom_field_values', 'custom_fields'
+  safe_attributes 'user_id', 'hours', 'comments', 'project_id', 'issue_id', 'activity_id', 'spent_on', 'custom_field_values', 'custom_fields'
 
   # Returns a SQL conditions string used to find all time entries visible by the specified user
   def self.visible_condition(user, options={})
@@ -119,6 +123,10 @@ class TimeEntry < ActiveRecord::Base
     self.project = issue.project if issue && project.nil?
   end
 
+  def set_author_if_nil
+    self.author = User.current if author.nil?
+  end
+
   def validate_time_entry
     if hours
       errors.add :hours, :invalid if hours < 0
@@ -134,8 +142,12 @@ class TimeEntry < ActiveRecord::Base
       end
     end
     errors.add :project_id, :invalid if project.nil?
+    errors.add :user_id, :invalid if (user_id != author_id && !self.assignable_users.map(&:id).include?(user_id))
     errors.add :issue_id, :invalid if (issue_id && !issue) || (issue && project!=issue.project) || @invalid_issue_id
     errors.add :activity_id, :inclusion if activity_id_changed? && project && !project.activities.include?(activity)
+    if spent_on_changed? && user
+      errors.add :base, I18n.t(:error_spent_on_future_date) if (!Setting.timelog_accept_future_dates? && (spent_on > user.today))
+    end
   end
 
   def hours=(h)
@@ -175,6 +187,16 @@ class TimeEntry < ActiveRecord::Base
   # Returns the custom fields that can be edited by the given user
   def editable_custom_fields(user=nil)
     editable_custom_field_values(user).map(&:custom_field).uniq
+  end
+
+  def assignable_users
+    users = []
+    if project
+      users = project.members.active.preload(:user)
+      users = users.map(&:user).select{ |u| u.allowed_to?(:log_time, project) }
+    end
+    users << User.current if User.current.logged? && !users.include?(User.current)
+    users
   end
 
   private

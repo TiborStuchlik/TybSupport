@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -72,7 +74,7 @@ class UsersControllerTest < Redmine::ControllerTest
       assert_equal User.logged.status(1).count, response.body.chomp.split("\n").size - 1
       assert_include 'active', response.body
       assert_not_include 'locked', response.body
-      assert_equal 'text/csv; header=present', @response.content_type
+      assert_equal 'text/csv', @response.content_type
     end
   end
 
@@ -84,7 +86,7 @@ class UsersControllerTest < Redmine::ControllerTest
       assert_equal User.logged.status(3).count, response.body.chomp.split("\n").size - 1
       assert_include 'locked', response.body
       assert_not_include 'active', response.body
-      assert_equal 'text/csv; header=present', @response.content_type
+      assert_equal 'text/csv', @response.content_type
     end
   end
 
@@ -94,7 +96,7 @@ class UsersControllerTest < Redmine::ControllerTest
 
     assert_equal User.logged.like('John').count, response.body.chomp.split("\n").size - 1
     assert_include 'John', response.body
-    assert_equal 'text/csv; header=present', @response.content_type
+    assert_equal 'text/csv', @response.content_type
   end
 
   def test_index_csv_with_group_filter
@@ -102,7 +104,7 @@ class UsersControllerTest < Redmine::ControllerTest
     assert_response :success
 
     assert_equal Group.find(10).users.count, response.body.chomp.split("\n").size - 1
-    assert_equal 'text/csv; header=present', @response.content_type
+    assert_equal 'text/csv', @response.content_type
   end
 
   def test_show
@@ -110,6 +112,9 @@ class UsersControllerTest < Redmine::ControllerTest
     get :show, :params => {:id => 2}
     assert_response :success
     assert_select 'h2', :text => /John Smith/
+
+    # groups block should not be rendeder for users which are not part of any group
+    assert_select 'div#groups', 0
   end
 
   def test_show_should_display_visible_custom_fields
@@ -118,7 +123,7 @@ class UsersControllerTest < Redmine::ControllerTest
     get :show, :params => {:id => 2}
     assert_response :success
 
-    assert_select 'li', :text => /Phone number/
+    assert_select 'li[class=?]', 'cf_4', :text => /Phone number/
   end
 
   def test_show_should_not_display_hidden_custom_fields
@@ -168,8 +173,20 @@ class UsersControllerTest < Redmine::ControllerTest
     get :show, :params => {:id => 2}
     assert_response :success
 
-    # membership of private project admin can see
-    assert_select 'li a', :text => "OnlineStore"
+    assert_select 'table.list.projects>tbody' do
+      assert_select 'tr:nth-of-type(1)' do
+        assert_select 'td:nth-of-type(1)>span>a', :text => 'eCookbook'
+        assert_select 'td:nth-of-type(2)', :text => 'Manager'
+      end
+      assert_select 'tr:nth-of-type(2)' do
+        assert_select 'td:nth-of-type(1)>span>a', :text => 'Private child of eCookbook'
+        assert_select 'td:nth-of-type(2)', :text => 'Manager'
+      end
+      assert_select 'tr:nth-of-type(3)' do
+        assert_select 'td:nth-of-type(1)>span>a', :text => 'OnlineStore'
+        assert_select 'td:nth-of-type(2)', :text => 'Developer'
+      end
+    end
   end
 
   def test_show_current_should_require_authentication
@@ -183,6 +200,37 @@ class UsersControllerTest < Redmine::ControllerTest
     get :show, :params => {:id => 'current'}
     assert_response :success
     assert_select 'h2', :text => /John Smith/
+  end
+
+  def test_show_issues_counts
+    @request.session[:user_id] = 2
+    get :show, :params => {:id => 2}
+    assert_select 'table.list.issue-report>tbody' do
+      assert_select 'tr:nth-of-type(1)' do
+        assert_select 'td:nth-of-type(1)>a', :text => 'Assigned issues'
+        assert_select 'td:nth-of-type(2)>a', :text => '1'   # open
+        assert_select 'td:nth-of-type(3)>a', :text => '0'   # closed
+        assert_select 'td:nth-of-type(4)>a', :text => '1'   # total
+      end
+      assert_select 'tr:nth-of-type(2)' do
+        assert_select 'td:nth-of-type(1)>a', :text => 'Reported issues'
+        assert_select 'td:nth-of-type(2)>a', :text => '11'  # open
+        assert_select 'td:nth-of-type(3)>a', :text => '2'   # closed
+        assert_select 'td:nth-of-type(4)>a', :text => '13'  # total
+      end
+    end
+  end
+
+  def test_show_user_should_list_user_groups
+    @request.session[:user_id] = 1
+    get :show, :params => {:id => 8}
+
+    assert_select 'div#groups', 1 do
+      assert_select 'h3', :text => 'Groups'
+      assert_select 'li', 2
+      assert_select 'a[href=?]', '/groups/10/edit', :text => 'A Team'
+      assert_select 'a[href=?]', '/groups/11/edit', :text => 'B Team'
+    end
   end
 
   def test_new

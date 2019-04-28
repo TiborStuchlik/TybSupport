@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -70,7 +72,7 @@ class Redmine::ApiTest::IssueCategoriesTest < Redmine::ApiTest::Base
         :params => {:issue_category => {:name => 'API Update'}},
         :headers => credentials('jsmith')
     end
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
     assert_equal 'API Update', IssueCategory.find(2).name
   end
@@ -91,7 +93,7 @@ class Redmine::ApiTest::IssueCategoriesTest < Redmine::ApiTest::Base
     assert_difference 'IssueCategory.count', -1 do
       delete '/issue_categories/1.xml', :headers => credentials('jsmith')
     end
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
     assert_nil IssueCategory.find_by_id(1)
   end
@@ -107,7 +109,7 @@ class Redmine::ApiTest::IssueCategoriesTest < Redmine::ApiTest::Base
           :headers => credentials('jsmith')
       end
     end
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
     assert_nil IssueCategory.find_by_id(1)
   end

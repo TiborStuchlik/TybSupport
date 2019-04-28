@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -36,9 +38,10 @@ class ProjectCopyTest < ActiveSupport::TestCase
            :boards, :messages,
            :repositories,
            :news, :comments,
-           :documents
+           :documents, :attachments
 
   def setup
+    User.current = nil
     ProjectCustomField.destroy_all
     @source_project = Project.find(2)
     @project = Project.new(:name => 'Copy Test', :identifier => 'copy-test')
@@ -368,7 +371,7 @@ class ProjectCopyTest < ActiveSupport::TestCase
     source_project = Project.find(1)
     assert @project.copy(source_project)
 
-    assert_equal 2, @project.documents.size
+    assert_equal 3, @project.documents.size
     @project.documents.each do |document|
       assert !source_project.documents.include?(document)
     end

@@ -1,5 +1,5 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -22,6 +22,10 @@ require File.expand_path('../../test_helper', __FILE__)
 class PrincipalTest < ActiveSupport::TestCase
   fixtures :users, :projects, :members, :member_roles, :roles,
            :email_addresses
+
+  def setup
+    User.current = nil
+  end
 
   def test_active_scope_should_return_groups_and_active_users
     result = Principal.active.to_a

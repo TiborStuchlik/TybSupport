@@ -261,7 +261,7 @@ ja:
   field_project: プロジェクト
   field_issue: チケット
   field_status: ステータス
-  field_notes: 注記
+  field_notes: コメント
   field_is_closed: 終了したチケット
   field_is_default: デフォルト値
   field_tracker: トラッカー
@@ -312,7 +312,7 @@ ja:
   field_is_filter: フィルタとして使用
   field_issue_to: 関連するチケット
   field_delay: 遅延
-  field_assignable: このロールにチケットを割り当て可能
+  field_assignable: このロールのユーザーにチケットを割り当て可能
   field_redirect_existing_links: 既存のリンクをリダイレクトする
   field_estimated_hours: 予定工数
   field_column_names: 項目
@@ -410,9 +410,9 @@ ja:
   permission_add_issues: チケットの追加
   permission_edit_issues: チケットの編集
   permission_manage_issue_relations: 関連するチケットの管理
-  permission_add_issue_notes: 注記の追加
-  permission_edit_issue_notes: 注記の編集
-  permission_edit_own_issue_notes: 自身が記入した注記の編集
+  permission_add_issue_notes: コメントの追加
+  permission_edit_issue_notes: コメントの編集
+  permission_edit_own_issue_notes: 自分が追加したコメントの編集
   permission_delete_issues: チケットの削除
   permission_manage_public_queries: 公開クエリの管理
   permission_save_queries: クエリの保存
@@ -421,10 +421,10 @@ ja:
   permission_view_issue_watchers: ウォッチャー一覧の閲覧
   permission_add_issue_watchers: ウォッチャーの追加
   permission_delete_issue_watchers: ウォッチャーの削除
-  permission_log_time: 作業時間の記入
+  permission_log_time: 作業時間の記録
   permission_view_time_entries: 作業時間の閲覧
   permission_edit_time_entries: 作業時間の編集
-  permission_edit_own_time_entries: 自身が記入した作業時間の編集
+  permission_edit_own_time_entries: 自分の作業時間の編集
   permission_manage_project_activities: 作業分類 (時間管理) の管理
   permission_view_news: ニュースの閲覧
   permission_manage_news: ニュースの管理
@@ -436,11 +436,11 @@ ja:
   permission_rename_wiki_pages: Wikiページ名の変更
   permission_delete_wiki_pages: Wikiページの削除
   permission_view_wiki_pages: Wikiの閲覧
-  permission_export_wiki_pages: Wikiページを他の形式にエクスポート
+  permission_export_wiki_pages: Wikiページのエクスポート
   permission_view_wiki_edits: Wiki履歴の閲覧
   permission_edit_wiki_pages: Wikiページの編集
   permission_delete_wiki_pages_attachments: 添付ファイルの削除
-  permission_protect_wiki_pages: Wikiページの凍結
+  permission_protect_wiki_pages: Wikiページの保護
   permission_manage_repository: リポジトリの管理
   permission_browse_repository: リポジトリの閲覧
   permission_view_changesets: 更新履歴の閲覧
@@ -449,9 +449,9 @@ ja:
   permission_view_messages: メッセージの閲覧
   permission_add_messages: メッセージの追加
   permission_edit_messages: メッセージの編集
-  permission_edit_own_messages: 自身が記入したメッセージの編集
+  permission_edit_own_messages: 自分が追加したメッセージの編集
   permission_delete_messages: メッセージの削除
-  permission_delete_own_messages: 自身が記入したメッセージの削除
+  permission_delete_own_messages: 自分が追加したメッセージの削除
   permission_manage_subtasks: 子チケットの管理
 
   project_module_issue_tracking: チケットトラッキング
@@ -603,7 +603,7 @@ ja:
   label_previous: 前
   label_used_by: 使用中
   label_details: 詳細
-  label_add_note: 注記を追加
+  label_add_note: コメントを追加
   label_calendar: カレンダー
   label_months_from: ヶ月分
   label_gantt: ガントチャート
@@ -633,13 +633,15 @@ ja:
   label_less_or_equal: 以下
   label_in: N日後
   label_today: 今日
-  label_all_time: 全期間
   label_yesterday: 昨日
+  label_tomorrow: 明日
   label_this_week: 今週
   label_last_week: 先週
+  label_next_week: 来週
   label_last_n_days: "直近%{count}日間"
   label_this_month: 今月
   label_last_month: 先月
+  label_next_month: 来月
   label_this_year: 今年
   label_date_range: 期間
   label_less_than_ago: N日前以降
@@ -868,7 +870,7 @@ ja:
 
   status_active: 有効
   status_registered: 登録
-  status_locked: ロック
+  status_locked: ロック中
 
   version_status_open: 進行中
   version_status_locked: ロック中
@@ -977,15 +979,15 @@ ja:
   label_role_anonymous: 匿名ユーザー
   label_role_non_member: 非メンバー
 
-  label_issue_note_added: 注記の追加
+  label_issue_note_added: コメントの追加
   label_issue_status_updated: ステータスの更新
   label_issue_priority_updated: 優先度の更新
   label_issues_visibility_own: 作成者か担当者であるチケット
   field_issues_visibility: 表示できるチケット
   label_issues_visibility_all: すべてのチケット
-  permission_set_own_issues_private: 自分のチケットをプライベートに設定
+  permission_set_own_issues_private: 自分が追加したチケットのプライベート設定
   field_is_private: プライベート
-  permission_set_issues_private: チケットをプライベートに設定
+  permission_set_issues_private: チケットのプライベート設定
   label_issues_visibility_public: プライベートチケット以外
   text_issues_destroy_descendants_confirmation: "%{count}個の子チケットも削除されます。"
   notice_issue_successful_create: チケット %{id} が作成されました。
@@ -999,7 +1001,7 @@ ja:
   description_available_columns: 利用できる項目
   description_issue_category_reassign: 新しいカテゴリを選択してください
   description_search: 検索キーワード
-  description_notes: 注記
+  description_notes: コメント
   description_choose_project: プロジェクト
   description_query_sort_criteria_attribute: 項目
   description_wiki_subpages_reassign: 新しい親ページを選択してください
@@ -1021,11 +1023,11 @@ ja:
   label_copy_attachments: 添付ファイルをコピー
   label_item_position: "%{position}/%{count}"
   label_completed_versions: 完了したバージョン
-  text_project_identifier_info: アルファベット小文字(a-z)・数字・ハイフン・アンダースコアが使えます。最初の文字はアルファベットの小文字にしてください。<br />識別子は後で変更することはできません。
+  text_project_identifier_info: アルファベット小文字(a-z)・数字・ハイフン・アンダースコアが使えます。<br />識別子は後で変更することはできません。
   field_multiple: 複数選択可
   setting_commit_cross_project_ref: 異なるプロジェクトのチケットの参照/修正を許可
-  text_issue_conflict_resolution_add_notes: 自分の編集内容を破棄し注記のみ追加
-  text_issue_conflict_resolution_overwrite: 自分の編集内容の保存を強行 (他のユーザーの更新内容は注記を除き上書きされます)
+  text_issue_conflict_resolution_add_notes: 自分の編集内容を破棄しコメントのみ追加
+  text_issue_conflict_resolution_overwrite: 自分の編集内容の保存を強行 (他のユーザーの更新内容はコメントを除き上書きされます)
   notice_issue_update_conflict: このチケットを編集中に他のユーザーが更新しました。
   text_issue_conflict_resolution_cancel: 自分の編集内容を破棄し %{link} を再表示
   permission_manage_related_issues: リビジョンとチケットの関連の管理
@@ -1070,9 +1072,9 @@ ja:
   label_copied_from: コピー元
   label_any_issues_in_project: 次のプロジェクト内のチケット
   label_any_issues_not_in_project: 次のプロジェクト外のチケット
-  field_private_notes: プライベート注記
-  permission_view_private_notes: プライベート注記の閲覧
-  permission_set_notes_private: 注記をプライベートに設定
+  field_private_notes: プライベートコメント
+  permission_view_private_notes: プライベートコメントの閲覧
+  permission_set_notes_private: コメントのプライベート設定
   label_no_issues_in_project: 次のプロジェクト内のチケットを除く
   label_any: すべて
   label_last_n_weeks: 直近%{count}週間
@@ -1151,7 +1153,7 @@ ja:
   label_parent_task_attributes_derived: 子チケットの値から算出
   label_parent_task_attributes_independent: 子チケットから独立
   label_time_entries_visibility_all: すべての作業時間
-  label_time_entries_visibility_own: 自身が登録した作業時間
+  label_time_entries_visibility_own: 自分の作業時間
   label_member_management: メンバーの管理
   label_member_management_all_roles: すべてのロール
   label_member_management_selected_roles_only: 次のロールのみ
@@ -1228,7 +1230,7 @@ ja:
   field_updated_by: 更新者
   field_last_updated_by: 最終更新者
   field_full_width_layout: ワイド表示
-  label_last_notes: 最新の注記
+  label_last_notes: 最新のコメント
   field_digest: チェックサム
   field_default_assigned_to: デフォルトの担当者
   setting_show_custom_fields_on_registration: アカウント登録画面でカスタムフィールドを表示
@@ -1253,4 +1255,21 @@ ja:
   label_ldaps_verify_peer: LDAPS
   label_ldaps_warning: 認証処理中の盗聴や改ざんなどの攻撃を防ぐために、暗号化されたLDAPSによる通信 (証明書の検証あり) の使用をお勧めします。
   label_nothing_to_preview: プレビューするものがありません
-  error_token_expired: This password recovery link has expired, please try again.
+  error_token_expired: パスワード再発行用のリンクはすでに失効しています。もう一度やり直してください。
+  error_spent_on_future_date: 未来日付の作業時間は入力できません
+  setting_timelog_accept_future_dates: 未来日付の作業時間の入力を許可
+  label_delete_link_to_subtask: 関連の削除
+  error_not_allowed_to_log_time_for_other_users: 他のユーザーの作業時間を入力する権限がありません
+  permission_log_time_for_other_users: 他のユーザーの作業時間の入力
+  text_role_no_workflow: このロールにワークフローが定義されていません
+  text_status_no_workflow: このステータスはどのトラッカーのワークフローでも使われていません
+  setting_mail_handler_preferred_body_part: マルチパート (HTML) メールの優先パート
+  setting_show_status_changes_in_mail_subject: 通知メールの題名にステータス変更の情報を挿入
+  label_inherited_from_parent_project: 親プロジェクトから継承
+  label_inherited_from_group: グループ %{name} から継承
+  label_trackers_description: トラッカーの説明
+  label_open_trackers_description: すべてのトラッカーの説明を表示
+  label_preferred_body_part_text: テキスト
+  label_preferred_body_part_html: HTML (experimental)
+  field_parent_issue_subject: 親チケットの題名
+  permission_edit_own_issues: 自分が追加したチケットの編集

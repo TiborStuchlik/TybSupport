@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -40,7 +42,8 @@ class IssuesController < ApplicationController
   helper :timelog
 
   def index
-    retrieve_query
+    use_session = !request.format.csv?
+    retrieve_query(IssueQuery, use_session)
 
     if @query.valid?
       respond_to do |format|
@@ -176,7 +179,7 @@ class IssuesController < ApplicationController
 
     if saved
       render_attachment_warning_if_needed(@issue)
-      flash[:notice] = l(:notice_successful_update) unless @issue.current_journal.new_record?
+      flash[:notice] = l(:notice_successful_update) unless @issue.current_journal.new_record? || params[:no_flash]
 
       respond_to do |format|
         format.html { redirect_back_or_default issue_path(@issue, previous_and_next_issue_ids_params) }
@@ -463,6 +466,7 @@ class IssuesController < ApplicationController
     @issue.init_journal(User.current)
 
     issue_attributes = params[:issue]
+    issue_attributes[:assigned_to_id] = User.current.id if issue_attributes && issue_attributes[:assigned_to_id] == 'me'
     if issue_attributes && params[:conflict_resolution]
       case params[:conflict_resolution]
       when 'overwrite'
@@ -519,6 +523,7 @@ class IssuesController < ApplicationController
       # so we can use the default version for the new project
       attrs.delete(:fixed_version_id)
     end
+    attrs[:assigned_to_id] = User.current.id if attrs[:assigned_to_id] == 'me'
     @issue.safe_attributes = attrs
 
     if @issue.project

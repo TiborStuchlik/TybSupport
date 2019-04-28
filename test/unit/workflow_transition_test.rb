@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -21,6 +23,7 @@ class WorkflowTransitionTest < ActiveSupport::TestCase
   fixtures :roles, :trackers, :issue_statuses
 
   def setup
+    User.current = nil
     WorkflowTransition.delete_all
   end
 

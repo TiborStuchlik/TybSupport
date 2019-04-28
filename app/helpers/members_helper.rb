@@ -1,5 +1,5 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -34,5 +34,20 @@ module MembersHelper
     }
 
     s + content_tag('span', links, :class => 'pagination')
+  end
+
+  # Returns inheritance information for an inherited member role 
+  def render_role_inheritance(member, role)
+    content = member.role_inheritance(role).map do |h|
+      if h.is_a?(Project)
+        l(:label_inherited_from_parent_project)
+      elsif h.is_a?(Group)
+        l(:label_inherited_from_group, :name => h.name.to_s)
+      end
+    end.compact.uniq
+  
+    if content.present?
+      content_tag('span', content.join(", "), :class => "info")
+    end
   end
 end

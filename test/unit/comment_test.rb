@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -18,9 +20,11 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class CommentTest < ActiveSupport::TestCase
-  fixtures :users, :email_addresses, :news, :comments, :projects, :enabled_modules
+  fixtures :users, :email_addresses, :news, :comments, :projects, :enabled_modules,
+           :user_preferences, :roles, :members, :member_roles
 
   def setup
+    User.current = nil
     @jsmith = User.find(2)
     @news = News.find(1)
   end

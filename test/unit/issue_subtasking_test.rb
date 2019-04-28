@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -24,6 +26,10 @@ class IssueSubtaskingTest < ActiveSupport::TestCase
            :issues,
            :enabled_modules,
            :workflows
+
+  def setup
+    User.current = nil
+  end
 
   def test_leaf_planning_fields_should_be_editable
     issue = Issue.generate!

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -28,6 +30,10 @@ class IssueTransactionTest < ActiveSupport::TestCase
            :time_entries
 
   self.use_transactional_tests = false
+
+  def setup
+    User.current = nil
+  end
 
   def test_invalid_move_to_another_project
     lft1 = new_issue_lft

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -19,6 +21,10 @@ require File.expand_path('../../test_helper', __FILE__)
 
 class UserPreferenceTest < ActiveSupport::TestCase
   fixtures :users, :user_preferences
+
+  def setup
+    User.current = nil
+  end
 
   def test_hide_mail_should_default_to_true
     preference = UserPreference.new

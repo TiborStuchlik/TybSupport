@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -21,6 +23,7 @@ class IssueCategoryTest < ActiveSupport::TestCase
   fixtures :issue_categories, :issues, :users, :groups_users
 
   def setup
+    User.current = nil
     @category = IssueCategory.find(1)
   end
 

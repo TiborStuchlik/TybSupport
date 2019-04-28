@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -42,6 +44,8 @@ class ContextMenusController < ApplicationController
 
     @priorities = IssuePriority.active.reverse
     @back = back_url
+
+    @columns = params[:c]
 
     @options_by_custom_field = {}
     if @can[:edit]

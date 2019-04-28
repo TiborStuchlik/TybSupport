@@ -335,7 +335,6 @@ gl:
   label_age: Idade
   label_ago: "hai"
   label_all: todos
-  label_all_time: todo o tempo
   label_all_words: Tódalas palabras
   label_and_its_subprojects: "%{value} e proxectos secundarios"
   label_applied_status: Aplicar estado
@@ -1198,11 +1197,11 @@ gl:
   button_filter: Filtro
   mail_body_password_updated: A súa contrasinal foi cambiada.
   label_no_preview: Non hai vista previa dispoñible
-  error_no_tracker_allowed_for_new_issue_in_project: O proxecto non ten ningún tipo 
+  error_no_tracker_allowed_for_new_issue_in_project: O proxecto non ten ningún tipo
     para que poida crear unha petición
   label_tracker_all: Tódolos tipos
   label_new_project_issue_tab_enabled: Amosar a lapela "Nova petición"
-  setting_new_item_menu_tab: Lapela no menú de cada proxecto para creación de novos obxectos 
+  setting_new_item_menu_tab: Lapela no menú de cada proxecto para creación de novos obxectos
   label_new_object_tab_enabled: Amosar a lista despregable "+"
   error_no_projects_with_tracker_allowed_for_new_issue: Non hai proxectos con tipos
     para as que poida crear unha petición
@@ -1262,4 +1261,25 @@ gl:
   label_ldaps_warning: Se recomenda usar unha conexión LDAPS con comprobación de
     certificado para evitar calquera manipulación durante o proceso de autenticación.
   label_nothing_to_preview: Nada que previsualizar
-  error_token_expired: This password recovery link has expired, please try again.
+  error_token_expired: Esta ligazón para recuperar a contrasinal ten caducado, por favor, tente de novo.
+  error_spent_on_future_date: Non pode imputar tempo nunha data futura
+  setting_timelog_accept_future_dates: Permitir imputar tempo en datas futuras
+  label_delete_link_to_subtask: Eliminar relación
+  error_not_allowed_to_log_time_for_other_users: Vostede non ten permitido imputar tempo para outros usuarios
+  permission_log_time_for_other_users: Imputar tempo dedicado a outros usuarios
+  label_tomorrow: mañá
+  label_next_week: próxima semana
+  label_next_month: próximo mes
+  text_role_no_workflow: Non hai fluxo de traballo definido para este rol
+  text_status_no_workflow: Ningún tipo de tarefa usa este estado nos fluxos de traballo
+  setting_mail_handler_preferred_body_part: Parte preferida dos correos multiparte (HTML)
+  setting_show_status_changes_in_mail_subject: Amosar os cambios de estado no asunto das notificacións de correo das
+    tarefas
+  label_inherited_from_parent_project: Herdado do proxecto pai
+  label_inherited_from_group: Herdado do grupo %{name}
+  label_trackers_description: Descricións dos tipos de tarefas
+  label_open_trackers_description: Ver as descricións de todos os tipos de tarefas
+  label_preferred_body_part_text: Text
+  label_preferred_body_part_html: HTML (experimental)
+  field_parent_issue_subject: Parent task subject
+  permission_edit_own_issues: Edit own issues

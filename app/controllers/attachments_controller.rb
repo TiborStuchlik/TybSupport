@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -164,8 +166,10 @@ class AttachmentsController < ApplicationController
 
   # Returns the menu item that should be selected when viewing an attachment
   def current_menu_item
-    if @attachment
-      case @attachment.container
+    container = @attachment.try(:container) || @container
+
+    if container
+      case container
       when WikiPage
         :wiki
       when Message
@@ -173,7 +177,7 @@ class AttachmentsController < ApplicationController
       when Project, Version
         :files
       else
-        @attachment.container.class.name.pluralize.downcase.to_sym
+        container.class.name.pluralize.downcase.to_sym
       end
     end
   end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -96,7 +98,7 @@ class Repository::Mercurial < Repository
   def find_changeset_by_name(name)
     return nil if name.blank?
     s = name.to_s
-    if /[^\d]/ =~ s or s.size > 8
+    if /[^\d]/.match?(s) || s.size > 8
       cs = changesets.where(:scmid => s).first
     else
       cs = changesets.find_by(:revision => s)

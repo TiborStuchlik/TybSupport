@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -252,6 +254,20 @@ class CustomFieldsControllerTest < Redmine::ControllerTest
     end
     field = IssueCustomField.order("id desc").first
     assert_equal [1, 3], field.projects.map(&:id).sort
+  end
+
+  def test_create_with_continue_params
+    assert_difference 'CustomField.count' do
+      post :create, :params => {
+          :type => 'IssueCustomField',
+          :continue => 'Create and Continue',
+          :custom_field => {
+            :name => 'foo',
+            :field_format => 'string'
+          }
+        }
+    end
+    assert_redirected_to '/custom_fields/new?type=IssueCustomField'
   end
 
   def test_create_with_failure

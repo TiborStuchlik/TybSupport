@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -23,8 +25,9 @@ class TimeEntryQuery < Query
   self.available_columns = [
     QueryColumn.new(:project, :sortable => "#{Project.table_name}.name", :groupable => true),
     QueryColumn.new(:spent_on, :sortable => ["#{TimeEntry.table_name}.spent_on", "#{TimeEntry.table_name}.created_on"], :default_order => 'desc', :groupable => true),
-    QueryColumn.new(:created_on, :sortable => "#{TimeEntry.table_name}.created_on", :default_order => 'desc'),
+    TimestampQueryColumn.new(:created_on, :sortable => "#{TimeEntry.table_name}.created_on", :default_order => 'desc', :groupable => true),
     QueryColumn.new(:tweek, :sortable => ["#{TimeEntry.table_name}.spent_on", "#{TimeEntry.table_name}.created_on"], :caption => :label_week),
+    QueryColumn.new(:author, :sortable => lambda {User.fields_for_order_statement}),
     QueryColumn.new(:user, :sortable => lambda {User.fields_for_order_statement}, :groupable => true),
     QueryColumn.new(:activity, :sortable => "#{TimeEntryActivity.table_name}.position", :groupable => true),
     QueryColumn.new(:issue, :sortable => "#{Issue.table_name}.id"),
@@ -72,6 +75,10 @@ class TimeEntryQuery < Query
       :values => lambda { project.issue_categories.collect{|s| [s.name, s.id.to_s] } } if project
 
     add_available_filter("user_id",
+      :type => :list_optional, :values => lambda { author_values }
+    )
+
+    add_available_filter("author_id",
       :type => :list_optional, :values => lambda { author_values }
     )
 
@@ -188,8 +195,6 @@ class TimeEntryQuery < Query
   end
 
   def sql_for_activity_id_field(field, operator, value)
-    condition_on_id = sql_for_field(field, operator, value, Enumeration.table_name, 'id')
-    condition_on_parent_id = sql_for_field(field, operator, value, Enumeration.table_name, 'parent_id')
     ids = value.map(&:to_i).join(',')
     table_name = Enumeration.table_name
     if operator == '='

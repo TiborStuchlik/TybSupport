@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -18,7 +20,8 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class TimeEntryActivityTest < ActiveSupport::TestCase
-  fixtures :enumerations, :time_entries, :custom_fields,
+  fixtures :enumerations, :time_entries,
+           :custom_fields, :custom_values,
            :issues, :projects, :users,
            :members, :roles, :member_roles,
            :trackers, :issue_statuses,
@@ -28,6 +31,10 @@ class TimeEntryActivityTest < ActiveSupport::TestCase
            :enabled_modules
 
   include Redmine::I18n
+
+  def setup
+    User.current = nil
+  end
 
   def test_should_be_an_enumeration
     assert TimeEntryActivity.ancestors.include?(Enumeration)

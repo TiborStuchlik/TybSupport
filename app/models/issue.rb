@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -178,7 +180,9 @@ class Issue < ActiveRecord::Base
 
   # Returns true if user or current user is allowed to edit the issue
   def attributes_editable?(user=User.current)
-    user_tracker_permission?(user, :edit_issues)
+    user_tracker_permission?(user, :edit_issues) || (
+      user_tracker_permission?(user, :edit_own_issues) && author == user
+    )
   end
 
   # Overrides Redmine::Acts::Attachable::InstanceMethods#attachments_editable?
@@ -526,7 +530,7 @@ class Issue < ActiveRecord::Base
 
     # Project and Tracker must be set before since new_statuses_allowed_to depends on it.
     if (p = attrs.delete('project_id')) && safe_attribute?('project_id')
-      if p.is_a?(String) && !p.match(/^\d*$/)
+      if p.is_a?(String) && !/^\d*$/.match?(p)
         p_id = Project.find_by_identifier(p).try(:id)
       else
         p_id = p.to_i
@@ -767,7 +771,7 @@ class Issue < ActiveRecord::Base
     user = new_record? ? author : current_journal.try(:user)
 
     required_attribute_names(user).each do |attribute|
-      if attribute =~ /^\d+$/
+      if /^\d+$/.match?(attribute)
         attribute = attribute.to_i
         v = custom_field_values.detect {|v| v.custom_field_id == attribute }
         if v && Array(v.value).detect(&:present?).nil?
@@ -1350,7 +1354,7 @@ class Issue < ActiveRecord::Base
 
   # Returns a string of css classes that apply to the issue
   def css_classes(user=User.current)
-    s = "issue tracker-#{tracker_id} status-#{status_id} #{priority.try(:css_classes)}"
+    s = +"issue tracker-#{tracker_id} status-#{status_id} #{priority.try(:css_classes)}"
     s << ' closed' if closed?
     s << ' overdue' if overdue?
     s << ' child' if child?

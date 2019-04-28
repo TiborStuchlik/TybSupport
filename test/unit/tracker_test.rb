@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -19,6 +21,10 @@ require File.expand_path('../../test_helper', __FILE__)
 
 class TrackerTest < ActiveSupport::TestCase
   fixtures :trackers, :workflows, :issue_statuses, :roles, :issues, :projects, :projects_trackers, :enabled_modules
+
+  def setup
+    User.current = nil
+  end
 
   def test_sorted_scope
     assert_equal Tracker.all.sort, Tracker.sorted.to_a
@@ -127,5 +133,11 @@ class TrackerTest < ActiveSupport::TestCase
         tracker.destroy
       end
     end
+  end
+
+  def test_tracker_should_have_description
+    tracker = Tracker.find(1)
+    assert tracker.respond_to?(:description)
+    assert_equal tracker.description, "Description for Bug tracker"
   end
 end

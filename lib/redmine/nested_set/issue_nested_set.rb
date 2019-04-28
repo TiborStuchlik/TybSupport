@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -149,7 +151,7 @@ module Redmine
       end
 
       def lock_nested_set
-        if self.class.connection.adapter_name =~ /sqlserver/i
+        if /sqlserver/i.match?(self.class.connection.adapter_name)
           lock = "WITH (ROWLOCK HOLDLOCK UPDLOCK)"
           # Custom lock for SQLServer
           # This can be problematic if root_id or parent root_id changes

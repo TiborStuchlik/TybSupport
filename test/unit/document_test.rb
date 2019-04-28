@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -22,6 +24,10 @@ class DocumentTest < ActiveSupport::TestCase
            :enabled_modules,
            :users, :email_addresses, :members, :member_roles, :roles,
            :groups_users
+
+  def setup
+    User.current = nil
+  end
 
   def test_create
     doc = Document.new(:project => Project.find(1), :title => 'New document', :category => Enumeration.find_by_name('User documentation'))

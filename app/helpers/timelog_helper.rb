@@ -1,5 +1,5 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -40,6 +40,11 @@ module TimelogHelper
     end
     activities.each { |a| collection << [a.name, a.id] }
     collection
+  end
+
+  def user_collection_for_select_options(time_entry)
+    collection = time_entry.assignable_users
+    principals_options_for_select(collection, time_entry.user_id)
   end
 
   def select_hours(data, criteria, value)

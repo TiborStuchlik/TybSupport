@@ -1,5 +1,5 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -275,6 +275,26 @@ class QueryTest < ActiveSupport::TestCase
   def test_operator_is_on_issue_id_should_accept_comma_separated_values
     query = IssueQuery.new(:name => '_')
     query.add_filter("issue_id", '=', ['1,3'])
+    issues = find_issues_with_query(query)
+    assert_equal 2, issues.size
+    assert_equal [1,3], issues.map(&:id).sort
+  end
+
+  def test_operator_is_on_parent_id_should_accept_comma_separated_values
+    Issue.where(:id => [2,4]).update_all(:parent_id => 1)
+    Issue.where(:id => 5).update_all(:parent_id => 3)
+    query = IssueQuery.new(:name => '_')
+    query.add_filter("parent_id", '=', ['1,3'])
+    issues = find_issues_with_query(query)
+    assert_equal 3, issues.size
+    assert_equal [2,4,5], issues.map(&:id).sort
+  end
+
+  def test_operator_is_on_child_id_should_accept_comma_separated_values
+    Issue.where(:id => [2,4]).update_all(:parent_id => 1)
+    Issue.where(:id => 5).update_all(:parent_id => 3)
+    query = IssueQuery.new(:name => '_')
+    query.add_filter("child_id", '=', ['2,4,5'])
     issues = find_issues_with_query(query)
     assert_equal 2, issues.size
     assert_equal [1,3], issues.map(&:id).sort
@@ -638,8 +658,20 @@ class QueryTest < ActiveSupport::TestCase
     issues.each {|issue| assert_equal Date.today, issue.due_date}
   end
 
+  def test_operator_tomorrow
+    issue = Issue.generate!(:due_date => User.current.today.tomorrow)
+    other_issues = []
+    other_issues << Issue.generate!(:due_date => User.current.today.yesterday)
+    other_issues << Issue.generate!(:due_date => User.current.today + 2)
+    query = IssueQuery.new(:project => Project.find(1), :name => '_')
+    query.add_filter('due_date', 'nd', [''])
+    issues = find_issues_with_query(query)
+    assert_include issue, issues
+    other_issues.each {|i| assert_not_include i, issues }
+  end
+
   def test_operator_date_periods
-    %w(t ld w lw l2w m lm y).each do |operator|
+    %w(t ld w lw l2w m lm y nd nw nm).each do |operator|
       query = IssueQuery.new(:name => '_')
       query.add_filter('due_date', operator, [''])
       assert query.valid?
@@ -707,6 +739,40 @@ class QueryTest < ActiveSupport::TestCase
     query = IssueQuery.new(:project => Project.find(1), :name => '_')
     query.add_filter('due_date', 'w', [''])
     assert_match /issues\.due_date > '#{quoted_date "2011-04-23"} 23:59:59(\.\d+)?' AND issues\.due_date <= '#{quoted_date "2011-04-30"} 23:59:59(\.\d+)?/,
+      query.statement
+  end
+
+  def test_range_for_next_week_with_week_starting_on_monday
+    I18n.locale = :fr
+    assert_equal '1', I18n.t(:general_first_day_of_week)
+
+    Date.stubs(:today).returns(Date.parse('2011-04-29')) # Friday
+
+    query = IssueQuery.new(:project => Project.find(1), :name => '_')
+    query.add_filter('due_date', 'nw', [''])
+    assert_match /issues\.due_date > '#{quoted_date "2011-05-01"} 23:59:59(\.\d+)?' AND issues\.due_date <= '#{quoted_date "2011-05-08"} 23:59:59(\.\d+)?/,
+      query.statement
+    I18n.locale = :en
+  end
+
+  def test_range_for_next_week_with_week_starting_on_sunday
+    I18n.locale = :en
+    assert_equal '7', I18n.t(:general_first_day_of_week)
+
+    Date.stubs(:today).returns(Date.parse('2011-04-29')) # Friday
+
+    query = IssueQuery.new(:project => Project.find(1), :name => '_')
+    query.add_filter('due_date', 'nw', [''])
+    assert_match /issues\.due_date > '#{quoted_date "2011-04-30"} 23:59:59(\.\d+)?' AND issues\.due_date <= '#{quoted_date "2011-05-07"} 23:59:59(\.\d+)?/,
+      query.statement
+  end
+
+  def test_range_for_next_month
+    Date.stubs(:today).returns(Date.parse('2011-04-29')) # Friday
+
+    query = IssueQuery.new(:project => Project.find(1), :name => '_')
+    query.add_filter('due_date', 'nm', [''])
+    assert_match /issues\.due_date > '#{quoted_date "2011-04-30"} 23:59:59(\.\d+)?' AND issues\.due_date <= '#{quoted_date "2011-05-31"} 23:59:59(\.\d+)?/,
       query.statement
   end
 
@@ -1496,6 +1562,12 @@ class QueryTest < ActiveSupport::TestCase
     assert_equal [['priority', 'desc'], ['tracker', 'asc'], ['priority', 'asc']], q.sort_criteria
   end
 
+  def test_sort_criteria_should_remove_blank_keys
+    q = IssueQuery.new
+    q.sort_criteria = [['priority', 'desc'], [nil, 'desc'], ['', 'asc'], ['project', 'asc']]
+    assert_equal [['priority', 'desc'], ['project', 'asc']], q.sort_criteria
+  end
+
   def test_set_sort_criteria_with_hash
     q = IssueQuery.new
     q.sort_criteria = {'0' => ['priority', 'desc'], '2' => ['tracker']}
@@ -1758,7 +1830,7 @@ class QueryTest < ActiveSupport::TestCase
   def test_label_for_fr
     set_language_if_valid 'fr'
     q = IssueQuery.new
-    assert_equal "Assign\xc3\xa9 \xc3\xa0".force_encoding('UTF-8'), q.label_for('assigned_to_id')
+    assert_equal 'Assigné à', q.label_for('assigned_to_id')
   end
 
   def test_editable_by
@@ -2216,6 +2288,7 @@ class QueryTest < ActiveSupport::TestCase
   end
 
   def test_project_statuses_values_should_return_only_active_and_closed_statuses
+    set_language_if_valid 'en'
     query = IssueQuery.new(:project => nil, :name => '_')
     project_status_filter = query.available_filters['project.status']
     assert_not_nil project_status_filter

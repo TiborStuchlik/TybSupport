@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -33,7 +35,7 @@ module Redmine
           c.iv = iv
           e = c.update(text.to_s)
           e << c.final
-          "aes-256-cbc:" + [e, iv].map {|v| Base64.encode64(v).strip}.join('--')
+          "aes-256-cbc:" + [e, iv].map {|v| Base64.strict_encode64(v)}.join('--')
         end
       end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -21,6 +23,7 @@ class WikiRedirectTest < ActiveSupport::TestCase
   fixtures :projects, :wikis, :wiki_pages
 
   def setup
+    User.current = nil
     @wiki = Wiki.find(1)
     @original = WikiPage.create(:wiki => @wiki, :title => 'Original title')
   end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -88,5 +90,10 @@ class Redmine::ApiTest::SearchTest < Redmine::ApiTest::Base
     assert_equal 8, json['offset']
     assert_equal 4, json['limit']
     assert_equal issue[8..10], json['results'].map {|r| r['id']}
+  end
+ 
+  test "GET /search.xml should not quick jump to the issue with given id" do
+    get '/search.xml', :params => {:q => '3'}
+    assert_response :success
   end
 end

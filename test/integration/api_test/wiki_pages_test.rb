@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -106,7 +108,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
         put '/projects/ecookbook/wiki/CookBook_documentation.xml',
           :params => {:wiki_page => {:text => 'New content from API', :comments => 'API update'}},
           :headers => credentials('jsmith')
-        assert_response 200
+        assert_response :no_content
       end
     end
 
@@ -123,7 +125,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
         put '/projects/ecookbook/wiki/CookBook_documentation.xml',
           :params => {:wiki_page => {:text => 'New content from API', :comments => 'API update', :version => '3'}},
           :headers => credentials('jsmith')
-        assert_response 200
+        assert_response :no_content
       end
     end
 
@@ -201,7 +203,7 @@ class Redmine::ApiTest::WikiPagesTest < Redmine::ApiTest::Base
   test "DELETE /projects/:project_id/wiki/:title.xml should destroy the page" do
     assert_difference 'WikiPage.count', -1 do
       delete '/projects/ecookbook/wiki/CookBook_documentation.xml', :headers => credentials('jsmith')
-      assert_response 200
+      assert_response :no_content
     end
 
     assert_nil WikiPage.find_by_id(1)

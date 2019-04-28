@@ -1,5 +1,5 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -37,7 +37,7 @@ module MyHelper
       handle = content_tag('span', '', :class => 'sort-handle', :title => l(:button_move))
       close = link_to(l(:button_delete),
                       {:action => "remove_block", :block => block},
-                      :remote => true, :method => 'post',
+                      :remote => true, :method => 'post', 
                       :class => "icon-only icon-close", :title => l(:button_delete))
       content = content_tag('div', handle + close, :class => 'contextual') + content
 
@@ -78,7 +78,7 @@ module MyHelper
   def render_calendar_block(block, settings)
     calendar = Redmine::Helpers::Calendar.new(User.current.today, current_language, :week)
     calendar.events = Issue.visible.
-      where(:project_id => User.current.projects.pluck(:id)).
+      where(:project => User.current.projects).
       where("(start_date>=? and start_date<=?) or (due_date>=? and due_date<=?)", calendar.startdt, calendar.enddt, calendar.startdt, calendar.enddt).
       includes(:project, :tracker, :priority, :assigned_to).
       references(:project, :tracker, :priority, :assigned_to).
@@ -142,7 +142,7 @@ module MyHelper
 
   def render_news_block(block, settings)
     news = News.visible.
-      where(:project_id => User.current.projects.pluck(:id)).
+      where(:project => User.current.projects).
       limit(10).
       includes(:project, :author).
       references(:project, :author).

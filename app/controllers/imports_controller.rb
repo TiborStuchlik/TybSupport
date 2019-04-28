@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -50,8 +52,7 @@ class ImportsController < ApplicationController
       redirect_to import_mapping_path(@import)
     end
 
-  # TODO: Remove ArgumentError when support for Ruby 2.2 is dropped (#28689)
-  rescue CSV::MalformedCSVError, ArgumentError, EncodingError => e
+  rescue CSV::MalformedCSVError, EncodingError => e
     if e.is_a?(CSV::MalformedCSVError) && e.message !~ /Invalid byte sequence/
       flash.now[:error] = l(:error_invalid_csv_file_or_settings)
     else

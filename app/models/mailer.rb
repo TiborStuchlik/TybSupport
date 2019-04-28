@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -27,7 +29,7 @@ class Mailer < ActionMailer::Base
   include Roadie::Rails::Automatic
 
   # Overrides ActionMailer::Base#process in order to set the recipient as the current user
-  # and his language as the default locale. 
+  # and his language as the default locale.
   # The first argument of all actions of this Mailer must be a User (the recipient),
   # otherwise an ArgumentError is raised.
   def process(action, *args)
@@ -77,8 +79,11 @@ class Mailer < ActionMailer::Base
     @issue = issue
     @user = user
     @issue_url = url_for(:controller => 'issues', :action => 'show', :id => issue)
+    subject = "[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}]"
+    subject += " (#{issue.status.name})" if Setting.show_status_changes_in_mail_subject?
+    subject += " #{issue.subject}"
     mail :to => user,
-      :subject => "[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}] (#{issue.status.name}) #{issue.subject}"
+      :subject => subject
   end
 
   # Notifies users about a new issue.
@@ -103,8 +108,8 @@ class Mailer < ActionMailer::Base
     references issue
     @author = journal.user
     s = "[#{issue.project.name} - #{issue.tracker.name} ##{issue.id}] "
-    s << "(#{issue.status.name}) " if journal.new_value_for('status_id')
-    s << issue.subject
+    s += "(#{issue.status.name}) " if journal.new_value_for('status_id') && Setting.show_status_changes_in_mail_subject?
+    s += issue.subject
     @issue = issue
     @user = user
     @journal = journal
@@ -134,6 +139,7 @@ class Mailer < ActionMailer::Base
     redmine_headers 'Project' => document.project.identifier
     @author = author
     @document = document
+    @user = user
     @document_url = url_for(:controller => 'documents', :action => 'show', :id => document)
     mail :to => user,
       :subject => "[#{document.project.name}] #{l(:label_document_new)}: #{document.title}"
@@ -169,6 +175,7 @@ class Mailer < ActionMailer::Base
     end
     redmine_headers 'Project' => container.project.identifier
     @attachments = attachments
+    @user = user
     @added_to = added_to
     @added_to_url = added_to_url
     mail :to => user,
@@ -200,6 +207,7 @@ class Mailer < ActionMailer::Base
     message_id news
     references news
     @news = news
+    @user = user
     @news_url = url_for(:controller => 'news', :action => 'show', :id => news)
     mail :to => user,
       :subject => "[#{news.project.name}] #{l(:label_news)}: #{news.title}"
@@ -225,6 +233,7 @@ class Mailer < ActionMailer::Base
     references news
     @news = news
     @comment = comment
+    @user = user
     @news_url = url_for(:controller => 'news', :action => 'show', :id => news)
     mail :to => user,
      :subject => "Re: [#{news.project.name}] #{l(:label_news)}: #{news.title}"
@@ -250,6 +259,7 @@ class Mailer < ActionMailer::Base
     message_id message
     references message.root
     @message = message
+    @user = user
     @message_url = url_for(message.event_url)
     mail :to => user,
       :subject => "[#{message.board.project.name} - #{message.board.name} - msg#{message.root.id}] #{message.subject}"
@@ -276,6 +286,7 @@ class Mailer < ActionMailer::Base
     @author = wiki_content.author
     message_id wiki_content
     @wiki_content = wiki_content
+    @user = user
     @wiki_content_url = url_for(:controller => 'wiki', :action => 'show',
                                       :project_id => wiki_content.project,
                                       :id => wiki_content.page.title)
@@ -301,6 +312,7 @@ class Mailer < ActionMailer::Base
     @author = wiki_content.author
     message_id wiki_content
     @wiki_content = wiki_content
+    @user = user
     @wiki_content_url = url_for(:controller => 'wiki', :action => 'show',
                                       :project_id => wiki_content.project,
                                       :id => wiki_content.page.title)
@@ -539,8 +551,11 @@ class Mailer < ActionMailer::Base
     @issues = issues
     @days = days
     @issues_url = url_for(:controller => 'issues', :action => 'index',
-                                :set_filter => 1, :assigned_to_id => user.id,
+                                :set_filter => 1, :assigned_to_id => 'me',
                                 :sort => 'due_date:asc')
+    query = IssueQuery.new(:name => '_')
+    query.add_filter('assigned_to_id', '=', ['me'])
+    @open_issues_count = query.issue_count
     mail :to => user,
       :subject => l(:mail_subject_reminder, :count => issues.size, :days => days)
   end
@@ -584,6 +599,7 @@ class Mailer < ActionMailer::Base
     issues_by_assignee.each do |assignee, issues|
       if assignee.is_a?(User) && assignee.active? && issues.present?
         visible_issues = issues.select {|i| i.visible?(assignee)}
+        visible_issues.sort!{|a, b| (a.due_date <=> b.due_date).nonzero? || (a.id <=> b.id)}
         reminder(assignee, visible_issues, days).deliver_later if visible_issues.present?
       end
     end
@@ -614,13 +630,30 @@ class Mailer < ActionMailer::Base
   end
 
   def mail(headers={}, &block)
+    # Add a display name to the From field if Setting.mail_from does not
+    # include it
+    begin
+      mail_from = Mail::Address.new(Setting.mail_from)
+      if mail_from.display_name.blank? && mail_from.comments.blank?
+        mail_from.display_name =
+          @author&.logged? ? @author.name : Setting.app_title
+      end
+      from = mail_from.format
+      list_id = "<#{mail_from.address.to_s.tr('@', '.')}>"
+    rescue Mail::Field::IncompleteParseError
+       # Use Setting.mail_from as it is if Mail::Address cannot parse it
+       # (probably the emission address is not RFC compliant)
+      from = Setting.mail_from.to_s
+      list_id = "<#{from.tr('@', '.')}>"
+    end
+
     headers.reverse_merge! 'X-Mailer' => 'Redmine',
             'X-Redmine-Host' => Setting.host_name,
             'X-Redmine-Site' => Setting.app_title,
             'X-Auto-Response-Suppress' => 'All',
             'Auto-Submitted' => 'auto-generated',
-            'From' => Setting.mail_from,
-            'List-Id' => "<#{Setting.mail_from.to_s.tr('@', '.')}>"
+            'From' => from,
+            'List-Id' => list_id
 
     # Replaces users with their email addresses
     [:to, :cc, :bcc].each do |key|
@@ -632,13 +665,13 @@ class Mailer < ActionMailer::Base
     # Removes the author from the recipients and cc
     # if the author does not want to receive notifications
     # about what the author do
-    if @author && @author.logged? && @author.pref.no_self_notified
+    if @author&.logged? && @author.pref.no_self_notified
       addresses = @author.mails
       headers[:to] -= addresses if headers[:to].is_a?(Array)
       headers[:cc] -= addresses if headers[:cc].is_a?(Array)
     end
 
-    if @author && @author.logged?
+    if @author&.logged?
       redmine_headers 'Sender' => @author.login
     end
 
@@ -650,10 +683,10 @@ class Mailer < ActionMailer::Base
     end
 
     if @message_id_object
-      headers[:message_id] = "<#{self.class.message_id_for(@message_id_object)}>"
+      headers[:message_id] = "<#{self.class.message_id_for(@message_id_object, @user)}>"
     end
     if @references_objects
-      headers[:references] = @references_objects.collect {|o| "<#{self.class.references_for(o)}>"}.join(' ')
+      headers[:references] = @references_objects.collect {|o| "<#{self.class.references_for(o, @user)}>"}.join(' ')
     end
 
     if block_given?
@@ -707,30 +740,28 @@ class Mailer < ActionMailer::Base
     h.each { |k,v| headers["X-Redmine-#{k}"] = v.to_s }
   end
 
-  def self.token_for(object, rand=true)
+  def self.token_for(object, user)
     timestamp = object.send(object.respond_to?(:created_on) ? :created_on : :updated_on)
     hash = [
       "redmine",
       "#{object.class.name.demodulize.underscore}-#{object.id}",
-      timestamp.strftime("%Y%m%d%H%M%S")
+      timestamp.utc.strftime("%Y%m%d%H%M%S")
     ]
-    if rand
-      hash << Redmine::Utils.random_hex(8)
-    end
+    hash << user.id if user
     host = Setting.mail_from.to_s.strip.gsub(%r{^.*@|>}, '')
     host = "#{::Socket.gethostname}.redmine" if host.empty?
     "#{hash.join('.')}@#{host}"
   end
 
   # Returns a Message-Id for the given object
-  def self.message_id_for(object)
-    token_for(object, true)
+  def self.message_id_for(object, user)
+    token_for(object, user)
   end
 
   # Returns a uniq token for a given object referenced by all notifications
   # related to this object
-  def self.references_for(object)
-    token_for(object, false)
+  def self.references_for(object, user)
+    token_for(object, user)
   end
 
   def message_id(object)

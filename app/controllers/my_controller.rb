@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -29,6 +31,7 @@ class MyController < ApplicationController
   helper :custom_fields
   helper :queries
   helper :activities
+  helper :calendars
 
   def index
     page

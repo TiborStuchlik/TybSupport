@@ -1,5 +1,5 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -21,6 +21,10 @@ require File.expand_path('../../test_helper', __FILE__)
 
 class WikiTest < ActiveSupport::TestCase
   fixtures :projects, :wikis, :wiki_pages, :wiki_contents, :wiki_content_versions
+
+  def setup
+    User.current = nil
+  end
 
   def test_create
     wiki = Wiki.new(:project => Project.find(3))
@@ -78,7 +82,7 @@ class WikiTest < ActiveSupport::TestCase
   end
 
   def test_titleize
-    ja_test = "\xe3\x83\x86\xe3\x82\xb9\xe3\x83\x88".force_encoding('UTF-8')
+    ja_test = 'テスト'
     assert_equal 'Page_title_with_CAPITALES', Wiki.titleize('page title with CAPITALES')
     assert_equal ja_test, Wiki.titleize(ja_test)
   end

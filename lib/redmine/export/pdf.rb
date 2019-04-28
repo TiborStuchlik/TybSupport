@@ -1,4 +1,5 @@
-# encoding: utf-8
+# frozen_string_literal: true
+
 #
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
@@ -91,7 +92,7 @@ module Redmine
           </style>'
 
           # Strip {{toc}} tags
-          txt.gsub!(/<p>\{\{([<>]?)toc\}\}<\/p>/i, '')
+          txt = txt.gsub(/<p>\{\{([<>]?)toc\}\}<\/p>/i, '')
           writeHTMLCell(w, h, x, y, css_tag + txt, border, ln, fill)
         end
 
@@ -133,15 +134,13 @@ module Redmine
       class RDMPdfEncoding
         def self.rdm_from_utf8(txt, encoding)
           txt ||= ''
-          txt = Redmine::CodesetUtil.from_utf8(txt, encoding)
-          txt.force_encoding('ASCII-8BIT')
-          txt
+          Redmine::CodesetUtil.from_utf8(txt, encoding).b
         end
 
         def self.attach(attachments, filename, encoding)
           filename_utf8 = Redmine::CodesetUtil.to_utf8(filename, encoding)
           atta = nil
-          if filename_utf8 =~ /^[^\/"]+\.(gif|jpg|jpe|jpeg|png)$/i
+          if /^[^\/"]+\.(gif|jpg|jpe|jpeg|png)$/i.match?(filename_utf8)
             atta = Attachment.latest_attach(attachments, filename_utf8)
           end
           if atta && atta.readable? && atta.visible?

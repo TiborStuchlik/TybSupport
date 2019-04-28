@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -18,6 +20,15 @@
 require File.expand_path('../../../../../../test_helper', __FILE__)
 
 class Redmine::Views::Builders::JsonTest < ActiveSupport::TestCase
+  def test_nil_and_false
+    assert_json_output({'value' => nil}) do |b|
+      b.value nil
+    end
+
+    assert_json_output({'value' => false}) do |b|
+      b.value false
+    end
+  end
 
   def test_hash
     assert_json_output({'person' => {'name' => 'Ryan', 'age' => 32}}) do |b|
@@ -82,6 +93,17 @@ class Redmine::Views::Builders::JsonTest < ActiveSupport::TestCase
             authors.author 'G. Cooper'
           end
         end
+      end
+    end
+  end
+
+  def test_request_response
+    assert_json_output({'request' => { 'get' => 'book' }, 'response' => { 'book' => { 'title' => 'Book 1' } }}) do |b|
+      b.request do
+        b.get 'book'
+      end
+      b.response do
+        b.book title: 'Book 1'
       end
     end
   end

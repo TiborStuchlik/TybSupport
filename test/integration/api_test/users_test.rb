@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -89,16 +91,10 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     assert_select 'user id', :text => '2'
   end
 
-  test "GET /users/:id should not return login for other user" do
+  test "GET /users/:id should return login for visible user" do
     get '/users/3.xml', :headers => credentials('jsmith')
     assert_response :success
-    assert_select 'user login', 0
-  end
-
-  test "GET /users/:id should return login for current user" do
-    get '/users/2.xml', :headers => credentials('jsmith')
-    assert_response :success
-    assert_select 'user login', :text => 'jsmith'
+    assert_select 'user login', :text => 'dlopper'
   end
 
   test "GET /users/:id should not return api_key for other user" do
@@ -262,7 +258,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     assert_equal 'jsmith@somenet.foo', user.mail
     assert !user.admin?
 
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
   end
 
@@ -285,7 +281,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
     assert_equal 'jsmith@somenet.foo', user.mail
     assert !user.admin?
 
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
   end
 
@@ -331,7 +327,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
       delete '/users/2.xml', :headers => credentials('admin')
     end
 
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
   end
 
@@ -340,7 +336,7 @@ class Redmine::ApiTest::UsersTest < Redmine::ApiTest::Base
       delete '/users/2.json', :headers => credentials('admin')
     end
 
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
   end
 end

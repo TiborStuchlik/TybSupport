@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -31,7 +33,8 @@ class ContextMenusControllerTest < Redmine::ControllerTest
            :issues, :issue_statuses, :issue_categories,
            :users,
            :enumerations,
-           :time_entries
+           :time_entries,
+           :custom_fields, :custom_fields_trackers, :custom_fields_projects
 
   def test_context_menu_one_issue
     @request.session[:user_id] = 2

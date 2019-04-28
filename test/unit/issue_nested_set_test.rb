@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -23,6 +25,10 @@ class IssueNestedSetTest < ActiveSupport::TestCase
            :issue_statuses, :issue_categories, :issue_relations,
            :enumerations,
            :issues
+
+  def setup
+    User.current = nil
+  end
 
   def test_new_record_is_leaf
     i = Issue.new

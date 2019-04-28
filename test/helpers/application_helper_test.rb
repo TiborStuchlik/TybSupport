@@ -1,5 +1,5 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -28,7 +28,7 @@ class ApplicationHelperTest < Redmine::HelperTest
            :members, :member_roles, :roles,
            :repositories, :changesets,
            :projects_trackers,
-           :trackers, :issue_statuses, :issues, :versions, :documents,
+           :trackers, :issue_statuses, :issues, :versions, :documents, :journals,
            :wikis, :wiki_pages, :wiki_contents,
            :boards, :messages, :news,
            :attachments, :enumerations,
@@ -37,7 +37,7 @@ class ApplicationHelperTest < Redmine::HelperTest
   def setup
     super
     set_tmp_attachments_directory
-    @russian_test = "\xd1\x82\xd0\xb5\xd1\x81\xd1\x82".force_encoding('UTF-8')
+    @russian_test = 'тест'
   end
 
   test "#link_to_if_authorized for authorized user should allow using the :controller and :action for the target link" do
@@ -94,6 +94,8 @@ class ApplicationHelperTest < Redmine::HelperTest
       'http://' => 'http://',
       'www.' => 'www.',
       'test-www.bar.com' => 'test-www.bar.com',
+      # ends with a hyphen
+      'http://www.redmine.org/example-' => '<a class="external" href="http://www.redmine.org/example-">http://www.redmine.org/example-</a>',
     }
     to_test.each { |text, result| assert_equal "<p>#{result}</p>", textilizable(text) }
   end
@@ -154,20 +156,30 @@ RAW
   end
 
   def test_attached_images_with_textile_and_non_ascii_filename
-    attachment = Attachment.generate!(:filename => 'café.jpg')
+    to_test = {
+      'CAFÉ.JPG' => 'CAF%C3%89.JPG',
+      'crème.jpg' => 'cr%C3%A8me.jpg',
+    }
     with_settings :text_formatting => 'textile' do
-      assert_include %(<img src="/attachments/download/#{attachment.id}/caf%C3%A9.jpg" alt="" />),
-        textilizable("!café.jpg!)", :attachments => [attachment])
+      to_test.each do |filename, result|
+        attachment = Attachment.generate!(:filename => filename)
+        assert_include %(<img src="/attachments/download/#{attachment.id}/#{result}" alt="" />), textilizable("!#{filename}!", :attachments => [attachment])
+      end
     end
   end
 
   def test_attached_images_with_markdown_and_non_ascii_filename
     skip unless Object.const_defined?(:Redcarpet)
 
-    attachment = Attachment.generate!(:filename => 'café.jpg')
+    to_test = {
+      'CAFÉ.JPG' => 'CAF%C3%89.JPG',
+      'crème.jpg' => 'cr%C3%A8me.jpg',
+    }
     with_settings :text_formatting => 'markdown' do
-      assert_include %(<img src="/attachments/download/#{attachment.id}/caf%C3%A9.jpg" alt="" />),
-        textilizable("![](café.jpg)", :attachments => [attachment])
+      to_test.each do |filename, result|
+        attachment = Attachment.generate!(:filename => filename)
+        assert_include %(<img src="/attachments/download/#{attachment.id}/#{result}" alt="" />), textilizable("![](#{filename})", :attachments => [attachment])
+      end
     end
   end
 
@@ -270,7 +282,10 @@ RAW
       '"a link":http://example.net/path!602815048C7B5C20!302.html' => '<a href="http://example.net/path!602815048C7B5C20!302.html" class="external">a link</a>',
       # escaping
       '"test":http://foo"bar' => '<a href="http://foo&quot;bar" class="external">test</a>',
-    }
+      # ends with a hyphen
+      '(see "inline link":http://www.foo.bar/Test-)' => '(see <a href="http://www.foo.bar/Test-" class="external">inline link</a>)',
+      'http://foo.bar/page?p=1&t=z&s=-' => '<a class="external" href="http://foo.bar/page?p=1&#38;t=z&#38;s=-">http://foo.bar/page?p=1&#38;t=z&#38;s=-</a>',
+      'This is an intern "link":/foo/bar-' => 'This is an intern <a href="/foo/bar-">link</a>',    }
     to_test.each { |text, result| assert_equal "<p>#{result}</p>", textilizable(text) }
   end
 
@@ -416,6 +431,14 @@ RAW
     }
     @project = Project.find(1)
     to_test.each { |text, result| assert_equal "<p>#{result}</p>", textilizable(text), "#{text} failed" }
+  end
+
+  def test_link_to_note_within_the_same_page
+    issue = Issue.find(1)
+    assert_equal '<p><a href="#note-14">#note-14</a></p>', textilizable('#note-14', :object => issue)
+
+    journal = Journal.find(2)
+    assert_equal '<p><a href="#note-2">#note-2</a></p>', textilizable('#note-2', :object => journal)
   end
 
   def test_user_links_with_email_as_login_name_should_not_be_parsed_textile
@@ -842,6 +865,47 @@ RAW
     end
   end
 
+  def test_wiki_links_with_square_brackets_in_project_name
+    User.current = User.find_by_login('jsmith')
+
+    another_project = Project.find(1) # eCookbook
+    another_project.name = "[foo]#{another_project.name}"
+    another_project.save
+
+    page = another_project.wiki.find_page('Another page')
+    page.title = "[bar]#{page.title}"
+    page.save
+
+    to_test = {
+      '[[[foo]eCookbook:]]' =>
+          link_to("[foo]eCookbook",
+                  "/projects/ecookbook/wiki",
+                  :class => "wiki-page"),
+      '[[[foo]eCookbook:CookBook documentation]]' =>
+          link_to("CookBook documentation",
+                  "/projects/ecookbook/wiki/CookBook_documentation",
+                  :class => "wiki-page"),
+      '[[[foo]eCookbook:[bar]Another page]]' =>
+          link_to("[bar]Another page",
+                  "/projects/ecookbook/wiki/%5Bbar%5DAnother_page",
+                  :class => "wiki-page"),
+      '[[[foo]eCookbook:Unknown page]]' =>
+          link_to("Unknown page",
+                  "/projects/ecookbook/wiki/Unknown_page",
+                  :class => "wiki-page new"),
+      '[[[foo]eCookbook:[baz]Unknown page]]' =>
+          link_to("[baz]Unknown page",
+                  "/projects/ecookbook/wiki/%5Bbaz%5DUnknown_page",
+                  :class => "wiki-page new"),
+    }
+    @project = Project.find(2)  # OnlineStore
+    with_settings :text_formatting => 'textile' do
+      to_test.each { |text, result| assert_equal "<p>#{result}</p>", textilizable(text) }
+    end
+    with_settings :text_formatting => 'markdown' do
+      to_test.each { |text, result| assert_equal "<p>#{result}</p>", textilizable(text).strip }
+    end
+  end
 
   def test_wiki_links_within_local_file_generation_context
     to_test = {
@@ -1123,6 +1187,10 @@ EXPECTED
     end
   end
 
+  def test_syntax_highlight_should_normalize_line_endings
+    assert_equal "line 1\nline 2\n", syntax_highlight("test.txt", "line 1\rline 2\r\n")
+  end
+
   def test_to_path_param
     assert_equal 'test1/test2', to_path_param('test1/test2')
     assert_equal 'test1/test2', to_path_param('/test1/test2/')
@@ -1374,7 +1442,7 @@ RAW
   end
 
   def test_parse_redmine_links_should_handle_a_tag_without_attributes
-    text = '<a>http://example.com</a>'
+    text = +'<a>http://example.com</a>'
     expected = text.dup
     parse_redmine_links(text, nil, nil, nil, true, {})
     assert_equal expected, text
@@ -1482,6 +1550,19 @@ RAW
       result = link_to("Dave2 Lopper2", "/users/5", :class => "user locked")
       assert_equal result, link_to_user(user)
     end
+  end
+
+  def test_link_to_group_should_return_only_group_name_for_non_admin_users
+    User.current = nil
+    group = Group.find(10)
+    assert_equal "A Team", link_to_group(group)
+  end
+
+  def test_link_to_group_should_link_to_group_edit_page_for_admin_users
+    User.current = User.find(1)
+    group = Group.find(10)
+    result = link_to("A Team", "/groups/10/edit")
+    assert_equal result, link_to_group(group)
   end
 
   def test_link_to_user_should_not_link_to_anonymous
@@ -1729,7 +1810,7 @@ RAW
   end
 
   def test_truncate_single_line_non_ascii
-    ja = "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e".force_encoding('UTF-8')
+    ja = '日本語'
     result = truncate_single_line_raw("#{ja}\n#{ja}\n#{ja}", 10)
     assert_equal "#{ja} #{ja}...", result
     assert !result.html_safe?
@@ -1783,6 +1864,10 @@ RAW
       '[[broken > more]]' =>
           link_to("broken > more",
                   "/projects/ecookbook/wiki/Broken_%3E_more",
+                  :class => "wiki-page new"),
+      '[[[foo]Including [square brackets] in wiki title]]' =>
+          link_to("[foo]Including [square brackets] in wiki title",
+                  "/projects/ecookbook/wiki/%5Bfoo%5DIncluding_%5Bsquare_brackets%5D_in_wiki_title",
                   :class => "wiki-page new"),
     }
   end

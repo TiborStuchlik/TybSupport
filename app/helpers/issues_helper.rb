@@ -1,5 +1,5 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -74,7 +74,7 @@ module IssuesHelper
   end
 
   def render_issue_subject_with_tree(issue)
-    s = ''
+    s = +''
     ancestors = issue.root? ? [] : issue.ancestors.visible.to_a
     ancestors.each do |ancestor|
       s << '<div>' + content_tag('p', link_to_issue(ancestor, :project => (issue.project_id != ancestor.project_id)))
@@ -82,7 +82,7 @@ module IssuesHelper
     s << '<div>'
     subject = h(issue.subject)
     if issue.is_private?
-      subject = subject + ' ' + content_tag('span', l(:field_is_private), :class => 'private') 
+      subject = subject + ' ' + content_tag('span', l(:field_is_private), :class => 'badge badge-private private')
     end
     s << content_tag('h3', subject)
     s << '</div>' * (ancestors.size + 1)
@@ -90,17 +90,27 @@ module IssuesHelper
   end
 
   def render_descendants_tree(issue)
-    s = '<table class="list issues odd-even">'
+    manage_relations = User.current.allowed_to?(:manage_subtasks, issue.project)
+    s = +'<table class="list issues odd-even">'
     issue_list(issue.descendants.visible.preload(:status, :priority, :tracker, :assigned_to).sort_by(&:lft)) do |child, level|
-      css = "issue issue-#{child.id} hascontextmenu #{child.css_classes}"
+      css = +"issue issue-#{child.id} hascontextmenu #{child.css_classes}"
       css << " idnt idnt-#{level}" if level > 0
+      buttons = manage_relations ? link_to(l(:label_delete_link_to_subtask),
+                                  issue_path({:id => child.id, :issue => {:parent_issue_id => ''}, :back_url => issue_path(issue.id), :no_flash => '1'}),
+                                  :method => :put,
+                                  :data => {:confirm => l(:text_are_you_sure)},
+                                  :title => l(:label_delete_link_to_subtask),
+                                  :class => 'icon-only icon-link-break'
+                                  ) : "".html_safe
+      buttons << link_to_context_menu
+
       s << content_tag('tr',
              content_tag('td', check_box_tag("ids[]", child.id, false, :id => nil), :class => 'checkbox') +
              content_tag('td', link_to_issue(child, :project => (issue.project_id != child.project_id)), :class => 'subject', :style => 'width: 50%') +
              content_tag('td', h(child.status), :class => 'status') +
              content_tag('td', link_to_user(child.assigned_to), :class => 'assigned_to') +
              content_tag('td', child.disabled_core_fields.include?('done_ratio') ? '' : progress_bar(child.done_ratio), :class=> 'done_ratio') +
-             content_tag('td', link_to_context_menu, :class => 'buttons'),
+             content_tag('td', buttons, :class => 'buttons'),
              :class => css)
     end
     s << '</table>'
@@ -129,8 +139,8 @@ module IssuesHelper
              content_tag('td', check_box_tag("ids[]", other_issue.id, false, :id => nil), :class => 'checkbox') +
              content_tag('td', relation.to_s(@issue) {|other| link_to_issue(other, :project => Setting.cross_project_issue_relations?)}.html_safe, :class => 'subject', :style => 'width: 50%') +
              content_tag('td', other_issue.status, :class => 'status') +
-             content_tag('td', other_issue.start_date, :class => 'start_date') +
-             content_tag('td', other_issue.due_date, :class => 'due_date') +
+             content_tag('td', format_date(other_issue.start_date), :class => 'start_date') +
+             content_tag('td', format_date(other_issue.due_date), :class => 'due_date') +
              content_tag('td', other_issue.disabled_core_fields.include?('done_ratio') ? '' : progress_bar(other_issue.done_ratio), :class=> 'done_ratio') +
              content_tag('td', buttons, :class => 'buttons'),
              :id => "relation-#{relation.id}",
@@ -146,7 +156,7 @@ module IssuesHelper
         l_hours_short(issue.estimated_hours)
       else
         s = issue.estimated_hours.present? ? l_hours_short(issue.estimated_hours) : ""
-        s << " (#{l(:label_total)}: #{l_hours_short(issue.total_estimated_hours)})"
+        s += " (#{l(:label_total)}: #{l_hours_short(issue.total_estimated_hours)})"
         s.html_safe
       end
     end
@@ -160,7 +170,7 @@ module IssuesHelper
         link_to(l_hours_short(issue.spent_hours), path)
       else
         s = issue.spent_hours > 0 ? l_hours_short(issue.spent_hours) : ""
-        s << " (#{l(:label_total)}: #{link_to l_hours_short(issue.total_spent_hours), path})"
+        s += " (#{l(:label_total)}: #{link_to l_hours_short(issue.total_spent_hours), path})"
         s.html_safe
       end
     end
@@ -176,13 +186,18 @@ module IssuesHelper
   end
 
   def trackers_options_for_select(issue)
+    trackers = trackers_for_select(issue)
+    trackers.collect {|t| [t.name, t.id]}
+  end
+
+  def trackers_for_select(issue)
     trackers = issue.allowed_target_trackers
     if issue.new_record? && issue.parent_issue_id.present?
       trackers = trackers.reject do |tracker|
         issue.tracker_id != tracker.id && tracker.disabled_core_fields.include?('parent_issue_id')
       end
     end
-    trackers.collect {|t| [t.name, t.id]}
+    trackers
   end
 
   class IssueFieldsRows
@@ -233,9 +248,8 @@ module IssuesHelper
     half = (values.size / 2.0).ceil
     issue_fields_rows do |rows|
       values.each_with_index do |value, i|
-        css = "cf_#{value.custom_field.id}"
         m = (i < half ? :left : :right)
-        rows.send m, custom_field_name_tag(value.custom_field), show_value(value), :class => css
+        rows.send m, custom_field_name_tag(value.custom_field), custom_field_value_tag(value), :class => value.custom_field.css_classes
       end
     end
   end
@@ -246,18 +260,14 @@ module IssuesHelper
 
     s = ''.html_safe
     values.each_with_index do |value, i|
-      attr_value = show_value(value)
-      next if attr_value.blank?
-
-      if value.custom_field.text_formatting == 'full'
-        attr_value = content_tag('div', attr_value, class: 'wiki')
-      end
+      attr_value_tag = custom_field_value_tag(value)
+      next if attr_value_tag.blank?
 
       content =
           content_tag('hr') +
           content_tag('p', content_tag('strong', custom_field_name_tag(value.custom_field) )) +
-          content_tag('div', attr_value, class: 'value')
-      s << content_tag('div', content, class: "cf_#{value.custom_field.id} attribute")
+          content_tag('div', attr_value_tag, class: 'value')
+      s << content_tag('div', content, class: "#{value.custom_field.css_classes} attribute")
     end
     s
   end
@@ -307,8 +317,8 @@ module IssuesHelper
 
   def email_issue_attributes(issue, user, html)
     items = []
-    %w(author status priority assigned_to category fixed_version).each do |attribute|
-      unless issue.disabled_core_fields.include?(attribute+"_id")
+    %w(author status priority assigned_to category fixed_version start_date due_date).each do |attribute|
+      if issue.disabled_core_fields.grep(/^#{attribute}(_id)?$/).empty?
         if html
           items << content_tag('strong', "#{l("field_#{attribute}")}: ") + (issue.send attribute)
         else

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -22,7 +24,12 @@ class Redmine::UserFieldFormatTest < ActionView::TestCase
   fixtures :projects, :roles, :users, :members, :member_roles,
            :trackers,
            :issue_statuses, :issue_categories, :issue_relations, :workflows,
-           :enumerations
+           :enumerations,
+           :custom_fields, :custom_fields_trackers, :custom_fields_projects
+
+  def setup
+    User.current = nil
+  end
 
   def test_user_role_should_reject_blank_values
     field = IssueCustomField.new(:name => 'Foo', :field_format => 'user', :user_role => ["1", ""])
@@ -43,6 +50,21 @@ class Redmine::UserFieldFormatTest < ActionView::TestCase
     issue = Issue.order('id DESC').first
     assert_include [user.name, user.id.to_s], field.possible_custom_value_options(issue.custom_value_for(field))
     assert issue.valid?
+  end
+
+  def test_non_existing_values_should_be_invalid
+    field = IssueCustomField.create!(:name => 'Foo', :field_format => 'user', :is_for_all => true, :trackers => Tracker.all)
+    project = Project.generate!
+    user = User.generate!
+    User.add_to_project(user, project, Role.find_by_name('Developer'))
+
+    field.user_role = [Role.find_by_name('Manager').id]
+    field.save!
+
+    issue = Issue.new(:project_id => project.id, :tracker_id => 1, :custom_field_values => {field.id => user.id})
+    assert_not_include [user.name, user.id.to_s], field.possible_custom_value_options(issue.custom_value_for(field))
+    assert_equal false, issue.valid?
+    assert_include "Foo #{::I18n.t('activerecord.errors.messages.inclusion')}", issue.errors.full_messages.first
   end
 
   def test_possible_values_options_should_return_project_members

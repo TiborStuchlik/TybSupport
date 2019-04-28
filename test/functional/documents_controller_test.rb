@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -20,7 +22,7 @@ require File.expand_path('../../test_helper', __FILE__)
 class DocumentsControllerTest < Redmine::ControllerTest
   fixtures :projects, :users, :email_addresses, :roles, :members, :member_roles,
            :enabled_modules, :documents, :enumerations,
-           :groups_users, :attachments
+           :groups_users, :attachments, :user_preferences
 
   def setup
     User.current = nil
@@ -45,13 +47,32 @@ class DocumentsControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_index_grouped_by_category
+    get :index, :params => {
+        :project_id => 'ecookbook',
+        :sort_by => 'category'
+      }
+    assert_response :success
+    assert_select '#content' do
+      # ascending order of DocumentCategory#id.
+      ['Uncategorized', 'Technical documentation'].each_with_index do |text,idx|
+        assert_select "h3:nth-of-type(#{idx + 1})", :text => text
+      end
+    end
+  end
+
   def test_index_grouped_by_date
     get :index, :params => {
         :project_id => 'ecookbook',
         :sort_by => 'date'
       }
     assert_response :success
-    assert_select 'h3', :text => '2007-02-12'
+    assert_select '#content' do
+      # descending order of date.
+      ['2007-03-05', '2007-02-12'].each_with_index do |text,idx|
+        assert_select "h3:nth-of-type(#{idx + 1})", :text => text
+      end
+    end
   end
 
   def test_index_grouped_by_title
@@ -60,7 +81,12 @@ class DocumentsControllerTest < Redmine::ControllerTest
         :sort_by => 'title'
       }
     assert_response :success
-    assert_select 'h3', :text => 'T'
+    assert_select '#content' do
+      # ascending order of title.
+      ['A', 'T'].each_with_index do |text,idx|
+        assert_select "h3:nth-of-type(#{idx + 1})", :text => text
+      end
+    end
   end
 
   def test_index_grouped_by_author
@@ -69,8 +95,13 @@ class DocumentsControllerTest < Redmine::ControllerTest
         :sort_by => 'author'
       }
     assert_response :success
-    assert_select 'h3', :text => 'John Smith'
-  end
+    assert_select '#content' do
+      # ascending order of author.
+      ['John Smith', 'Redmine Admin'].each_with_index do |text,idx|
+        assert_select "h3:nth-of-type(#{idx + 1})", :text => text
+      end
+    end
+   end
 
   def test_index_with_long_description
     # adds a long description to the first document

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -135,7 +137,7 @@ class Redmine::ApiTest::MembershipsTest < Redmine::ApiTest::Base
         :params => {:membership => {:user_id => 3, :role_ids => [1,2]}},
         :headers => credentials('jsmith')
 
-      assert_response :ok
+      assert_response :no_content
       assert_equal '', @response.body
     end
     member = Member.find(2)
@@ -156,7 +158,7 @@ class Redmine::ApiTest::MembershipsTest < Redmine::ApiTest::Base
     assert_difference 'Member.count', -1 do
       delete '/memberships/2.xml', :headers => credentials('jsmith')
 
-      assert_response :ok
+      assert_response :no_content
       assert_equal '', @response.body
     end
     assert_nil Member.find_by_id(2)

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # redMine - project management software
 # Copyright (C) 2006-2007  Jean-Philippe Lang
 #
@@ -43,7 +45,7 @@ module Redmine
           end
 
           def scm_command_version
-            scm_version = scm_version_from_command_line.dup.force_encoding('ASCII-8BIT')
+            scm_version = scm_version_from_command_line.b
             if m = scm_version.match(%r{\A(.*?)((\d+\.)+\d+)}m)
               m[2].scan(%r{\d+}).collect(&:to_i)
             end
@@ -91,7 +93,7 @@ module Redmine
         def entries(path=nil, identifier=nil, options={})
           logger.debug "<cvs> entries '#{path}' with identifier '#{identifier}'"
           path_locale = scm_iconv(@path_encoding, 'UTF-8', path)
-          path_locale.force_encoding("ASCII-8BIT")
+          path_locale = path_locale.b
           entries = Entries.new
           cmd_args = %w|-q rls -e|
           cmd_args << "-D" << time_to_cvstime_rlog(identifier) if identifier
@@ -159,7 +161,7 @@ module Redmine
           cmd_args << path_with_project_utf8
           scm_cmd(*cmd_args) do |io|
             state      = "entry_start"
-            commit_log = String.new
+            commit_log = ""
             revision   = nil
             date       = nil
             author     = nil
@@ -168,8 +170,8 @@ module Redmine
             file_state = nil
             branch_map = nil
             io.each_line() do |line|
-              if state != "revision" && /^#{ENDLOG}/ =~ line
-                commit_log = String.new
+              if state != "revision" && /^#{ENDLOG}/.match?(line)
+                commit_log = ""
                 revision   = nil
                 state      = "entry_start"
               end
@@ -181,10 +183,10 @@ module Redmine
                   logger.debug("Path #{entry_path} <=> Name #{entry_name}")
                 elsif /^head: (.+)$/ =~ line
                   entry_headRev = $1 #unless entry.nil?
-                elsif /^symbolic names:/ =~ line
+                elsif /^symbolic names:/.match?(line)
                   state = "symbolic" #unless entry.nil?
-                elsif /^#{STARTLOG}/ =~ line
-                  commit_log = String.new
+                elsif /^#{STARTLOG}/.match?(line)
+                  commit_log = ""
                   state      = "revision"
                 end
                 next
@@ -228,7 +230,7 @@ module Redmine
                            }]
                          })
                   end
-                  commit_log = String.new
+                  commit_log = ""
                   revision   = nil
                   if /^#{ENDLOG}/ =~ line
                     state = "entry_start"
@@ -259,7 +261,7 @@ module Redmine
                   #                  version.line_minus = 0
                   #                end
                 else
-                  commit_log << line unless line =~ /^\*\*\* empty log message \*\*\*/
+                  commit_log += line unless line =~ /^\*\*\* empty log message \*\*\*/
                 end
               end
             end

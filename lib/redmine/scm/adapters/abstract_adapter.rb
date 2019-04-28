@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -184,7 +186,7 @@ module Redmine
 
         def target(path, sq=true)
           path ||= ''
-          base = path.match(/^\//) ? root_url : url
+          base = /^\//.match?(path) ? root_url : url
           str = "#{base}/#{path}".gsub(/[?<>\*]/, '')
           if sq
             str = shell_quote(str)
@@ -212,7 +214,7 @@ module Redmine
             path = Redmine::Configuration['scm_stderr_log_file'].presence
             path ||= Rails.root.join("log/#{Rails.env}.scm.stderr.log").to_s
             if File.exists?(path)
-              if File.file?(path) && File.writable?(path) 
+              if File.file?(path) && File.writable?(path)
                 writable = true
               else
                 logger.warn("SCM log file (#{path}) is not writable")
@@ -274,8 +276,9 @@ module Redmine
         end
 
         def scm_iconv(to, from, str)
-          return nil if str.nil?
+          return if str.nil?
           return str if to == from && str.encoding.to_s == from
+          str = str.dup
           str.force_encoding(from)
           begin
             str.encode(to)

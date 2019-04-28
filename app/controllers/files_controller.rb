@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -44,7 +46,7 @@ class FilesController < ApplicationController
   end
 
   def new
-    @versions = @project.versions.sort
+    @versions = @project.versions.sorted
   end
 
   def create

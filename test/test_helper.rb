@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -40,6 +42,10 @@ Redmine::SudoMode.disable!
 
 $redmine_tmp_attachments_directory = "#{Rails.root}/tmp/test/attachments"
 FileUtils.mkdir_p $redmine_tmp_attachments_directory
+
+$redmine_tmp_pdf_directory = "#{Rails.root}/tmp/test/pdf"
+FileUtils.mkdir_p $redmine_tmp_pdf_directory
+FileUtils.rm Dir.glob('#$redmine_tmp_pdf_directory/*.pdf')
 
 class ActionView::TestCase
   helper :application
@@ -312,7 +318,12 @@ module Redmine
     def columns_in_list
       css_select('table.list thead th:not(.checkbox)').map(&:text).select(&:present?)
     end
-  
+
+    # Returns the values that are displayed in tds with the given css class
+    def columns_values_in_list(css_class)
+      css_select("table.list tbody td.#{css_class}").map(&:text)
+    end
+
     # Verifies that the query filters match the expected filters
     def assert_query_filters(expected_filters)
       response.body =~ /initFilters\(\);\s*((addFilter\(.+\);\s*)*)/
@@ -323,6 +334,15 @@ module Redmine
         assert_include s, filter_init
       end
       assert_equal expected_filters.size, filter_init.scan("addFilter").size, "filters counts don't match"
+    end
+
+    # Saves the generated PDF in tmp/test/pdf
+    def save_pdf
+      assert_equal 'application/pdf', response.content_type
+      filename = "#{self.class.name.underscore}__#{method_name}.pdf"
+      File.open(File.join($redmine_tmp_pdf_directory, filename), "wb") do |f|
+        f.write response.body
+      end
     end
   end
 

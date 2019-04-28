@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -19,6 +21,10 @@ require File.expand_path('../../test_helper', __FILE__)
 
 class EnabledModuleTest < ActiveSupport::TestCase
   fixtures :projects, :trackers, :issue_statuses, :wikis
+
+  def setup
+    User.current = nil
+  end
 
   def test_enabling_wiki_should_create_a_wiki
     CustomField.delete_all

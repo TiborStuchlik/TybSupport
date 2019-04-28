@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -190,6 +192,10 @@ class CustomField < ActiveRecord::Base
     full_width_layout == '1'
   end
 
+  def full_text_formatting?
+    text_formatting == 'full'
+  end
+
   # Returns a ORDER BY clause that can used to sort customized
   # objects by their value of the custom field.
   # Returns nil if the custom field can not be used for sorting.
@@ -295,6 +301,10 @@ class CustomField < ActiveRecord::Base
       attr_name = "url"
     end
     super(attr_name, *args)
+  end
+
+  def css_classes
+    "cf_#{id}"
   end
 
   protected

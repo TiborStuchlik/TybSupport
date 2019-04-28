@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -77,7 +79,7 @@ class Import < ActiveRecord::Base
   # Returns the full path of the file to import
   # It is stored in tmp/imports with a random hex as filename
   def filepath
-    if filename.present? && filename =~ /\A[0-9a-f]+\z/
+    if filename.present? && /\A[0-9a-f]+\z/.match?(filename)
       File.join(Rails.root, "tmp", "imports", filename)
     else
       nil
@@ -217,6 +219,7 @@ class Import < ActiveRecord::Base
 
     csv_options = {:headers => false}
     csv_options[:encoding] = settings['encoding'].to_s.presence || 'UTF-8'
+    csv_options[:encoding] = 'bom|UTF-8' if csv_options[:encoding] == 'UTF-8'
     separator = settings['separator'].to_s
     csv_options[:col_sep] = separator if separator.size == 1
     wrapper = settings['wrapper'].to_s

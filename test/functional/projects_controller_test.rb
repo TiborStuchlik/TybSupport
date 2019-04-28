@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -171,8 +173,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :identifier => "blog",
           :is_public => 1,
           :custom_field_values => {
-            '3' => 'Beta' 
-          },    
+            '3' => 'Beta'
+          },
           :tracker_ids => ['1', '3'],
           # an issue custom field that is not for all project
           :issue_custom_field_ids => ['9'],
@@ -205,10 +207,10 @@ class ProjectsControllerTest < Redmine::ControllerTest
             :identifier => "blog",
             :is_public => 1,
             :custom_field_values => {
-              '3' => 'Beta' 
-            },    
+              '3' => 'Beta'
+            },
             :parent_id => 1
-            
+
           }
         }
       assert_redirected_to '/projects/blog/settings'
@@ -227,7 +229,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :project => {
             :name => "blog",
             :identifier => "blog"
-          },  
+          },
           :continue => 'Create and continue'
         }
     end
@@ -245,11 +247,11 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :identifier => "blog",
           :is_public => 1,
           :custom_field_values => {
-            '3' => 'Beta' 
-          },    
+            '3' => 'Beta'
+          },
           :tracker_ids => ['1', '3'],
           :enabled_module_names => ['issue_tracking', 'news', 'repository']
-          
+
         }
       }
 
@@ -280,10 +282,10 @@ class ProjectsControllerTest < Redmine::ControllerTest
             :identifier => "blog",
             :is_public => 1,
             :custom_field_values => {
-              '3' => 'Beta' 
-            },    
+              '3' => 'Beta'
+            },
             :parent_id => 1
-            
+
           }
         }
     end
@@ -303,10 +305,10 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :identifier => "blog",
           :is_public => 1,
           :custom_field_values => {
-            '3' => 'Beta' 
-          },    
+            '3' => 'Beta'
+          },
           :parent_id => 1
-          
+
         }
       }
     assert_redirected_to '/projects/blog/settings'
@@ -327,9 +329,9 @@ class ProjectsControllerTest < Redmine::ControllerTest
             :identifier => "blog",
             :is_public => 1,
             :custom_field_values => {
-              '3' => 'Beta' 
-            }    
-            
+              '3' => 'Beta'
+            }
+
           }
         }
     end
@@ -351,10 +353,10 @@ class ProjectsControllerTest < Redmine::ControllerTest
             :identifier => "blog",
             :is_public => 1,
             :custom_field_values => {
-              '3' => 'Beta' 
-            },    
+              '3' => 'Beta'
+            },
             :parent_id => 6
-            
+
           }
         }
     end
@@ -375,7 +377,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
               :name => "blog1",
               :identifier => "blog1",
               :enabled_module_names => ["issue_tracking", "repository"]
-              
+
             }
           }
       end
@@ -388,7 +390,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
               :name => "blog2",
               :identifier => "blog2",
               :enabled_module_names => ["issue_tracking", "repository"]
-              
+
             }
           }
       end
@@ -408,7 +410,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
             :identifier => 'inherited',
             :parent_id => parent.id,
             :inherit_members => '1'
-            
+
           }
         }
       assert_response 302
@@ -430,7 +432,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
               :name => "blog",
               :identifier => "",
               :enabled_module_names => %w(issue_tracking news)
-              
+
             }
           }
       end
@@ -477,7 +479,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
       }
     assert_response :success
 
-    assert_select 'li', :text => /Development status/
+    assert_select 'li[class=?]', 'cf_3', :text => /Development status/
   end
 
   def test_show_should_not_display_hidden_custom_fields
@@ -524,9 +526,9 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response :success
   end
 
-  def show_archived_project_should_be_denied
+  def test_show_archived_project_should_be_denied
     project = Project.find_by_identifier('ecookbook')
-    project.archive!
+    project.archive
 
     get :show, :params => {
         :id => 'ecookbook'
@@ -534,6 +536,18 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response 403
     assert_select 'p', :text => /archived/
     assert_not_include project.name, response.body
+  end
+
+  def test_show_archived_project_should_show_unarchive_link_to_admins
+    @request.session[:user_id] = 1
+    project = Project.find_by_identifier('ecookbook')
+    project.archive
+
+    get :show, :params => {
+        :id => 'ecookbook'
+      }
+    assert_response 403
+    assert_select 'a', :text => "Unarchive"
   end
 
   def test_show_should_not_show_private_subprojects_that_are_not_visible
@@ -561,6 +575,18 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_response :success
     # Make sure there's a > 0 issue count
     assert_select 'table.issue-report td.total a', :text => %r{\A[1-9]\d*\z}
+  end
+
+  def test_show_should_spent_and_estimated_time
+    @request.session[:user_id] = 1
+    get :show, :params => {
+        :id => 'ecookbook'
+      }
+
+    assert_select 'div.spent_time.box>ul' do
+      assert_select '>li:nth-child(1)', :text => 'Estimated time: 203.50 hours'
+      assert_select '>li:nth-child(2)', :text => 'Spent time: 162.90 hours'
+    end
   end
 
   def test_settings
@@ -934,8 +960,8 @@ class ProjectsControllerTest < Redmine::ControllerTest
             :identifier => 'unique-copy',
             :tracker_ids => ['1', '2', '3', ''],
             :enabled_module_names => %w(issue_tracking time_tracking)
-            
-          },  
+
+          },
           :only => %w(issues versions)
         }
     end
@@ -1017,5 +1043,36 @@ class ProjectsControllerTest < Redmine::ControllerTest
         :id => 1
       }
     assert_select 'body.project-ecookbook'
+  end
+
+  def test_default_search_scope_in_global_page
+    get :index
+
+    assert_select 'div#quick-search form' do
+      assert_select 'input[name=scope][type=hidden]'
+      assert_select 'a[href=?]', '/search'
+    end
+  end
+
+  def test_default_search_scope_for_project_without_subprojects
+    get :show, :params => {
+      :id => 4,
+    }
+
+    assert_select 'div#quick-search form' do
+      assert_select 'input[name=scope][type=hidden]'
+      assert_select 'a[href=?]', '/projects/subproject2/search'
+    end
+  end
+
+  def test_default_search_scope_for_project_with_subprojects
+    get :show, :params => {
+      :id => 1,
+    }
+
+    assert_select 'div#quick-search form' do
+      assert_select 'input[name=scope][type=hidden][value=subprojects]'
+      assert_select 'a[href=?]', '/projects/ecookbook/search?scope=subprojects'
+    end
   end
 end

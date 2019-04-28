@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -337,5 +339,20 @@ class IssuesTest < ApplicationSystemTestCase
     subject_index = csv.shift.index('Subject')
     subjects = csv.map {|row| row[subject_index]}
     assert_equal subjects.sort, subjects
+  end
+
+  def test_issue_trackers_description_should_select_tracker
+    log_user('admin', 'admin')
+
+    visit '/issues/1'
+    page.first(:link, 'Edit').click
+    page.click_link('View all trackers description')
+    assert page.has_css?('#trackers_description')
+    within('#trackers_description') do
+      click_link('Feature')
+    end
+
+    assert !page.has_css?('#trackers_description')
+    assert_equal "2", page.find('select#issue_tracker_id').value
   end
 end

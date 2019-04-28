@@ -1,4 +1,5 @@
-#encoding: utf-8
+# frozen_string_literal: true
+
 #
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
@@ -603,6 +604,22 @@ EXPECTED
   def test_should_not_crash_with_special_input
     assert_nothing_raised { to_html(" \f") }
     assert_nothing_raised { to_html(" \v") }
+  end
+
+  def test_should_not_handle_as_preformatted_text_tags_that_starts_with_pre
+    text = <<-STR
+<pree>
+  This is some text
+</pree>
+STR
+
+    expected = <<-EXPECTED
+<p>&lt;pree&gt;<br />
+  This is some text<br />
+&lt;/pree&gt;</p>
+EXPECTED
+
+    assert_equal expected.gsub(%r{[\r\n\t]}, ''), to_html(text).gsub(%r{[\r\n\t]}, '')
   end
 
   private

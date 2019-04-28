@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -129,6 +131,7 @@ class MessagesControllerTest < Redmine::ControllerTest
           }
         }
     end
+    assert_equal I18n.t(:notice_successful_create), flash[:notice]
     message = Message.find_by_subject('Test created message')
     assert_not_nil message
     assert_redirected_to "/boards/1/topics/#{message.to_param}"
@@ -171,6 +174,7 @@ class MessagesControllerTest < Redmine::ControllerTest
         }
       }
     assert_redirected_to '/boards/1/topics/1'
+    assert_equal I18n.t(:notice_successful_update), flash[:notice]
     message = Message.find(1)
     assert_equal 'New subject', message.subject
     assert_equal 'New body', message.content
@@ -189,6 +193,7 @@ class MessagesControllerTest < Redmine::ControllerTest
         }
       }
     assert_redirected_to '/boards/1/topics/1'
+    assert_equal I18n.t(:notice_successful_update), flash[:notice]
     message = Message.find(1)
     assert_equal true, message.sticky?
     assert_equal true, message.locked?
@@ -222,6 +227,7 @@ class MessagesControllerTest < Redmine::ControllerTest
       }
     reply = Message.order('id DESC').first
     assert_redirected_to "/boards/1/topics/1?r=#{reply.id}"
+    assert_equal I18n.t(:notice_successful_update), flash[:notice]
     assert Message.find_by_subject('Test reply')
   end
 
@@ -234,6 +240,7 @@ class MessagesControllerTest < Redmine::ControllerTest
         }
     end
     assert_redirected_to '/projects/ecookbook/boards/1'
+    assert_equal I18n.t(:notice_successful_delete), flash[:notice]
     assert_nil Message.find_by_id(1)
   end
 
@@ -246,6 +253,7 @@ class MessagesControllerTest < Redmine::ControllerTest
         }
     end
     assert_redirected_to '/boards/1/topics/1?r=2'
+    assert_equal I18n.t(:notice_successful_delete), flash[:notice]
     assert_nil Message.find_by_id(2)
   end
 

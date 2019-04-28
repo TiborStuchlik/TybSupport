@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -71,8 +73,28 @@ class QueryColumn
     object.send name
   end
 
+  # Returns the group that object belongs to when grouping query results
+  def group_value(object)
+    value(object)
+  end
+
   def css_classes
     name
+  end
+end
+
+class TimestampQueryColumn < QueryColumn
+
+  def groupable
+    if @groupable
+      Redmine::Database.timestamp_to_date(sortable, User.current.time_zone)
+    end
+  end
+
+  def group_value(object)
+    if time = value(object)
+      User.current.time_to_date(time)
+    end
   end
 end
 
@@ -103,7 +125,7 @@ class QueryCustomFieldColumn < QueryColumn
     self.sortable = custom_field.order_statement || false
     self.groupable = custom_field.group_statement || false
     self.totalable = options.key?(:totalable) ? !!options[:totalable] : custom_field.totalable?
-    @inline = true
+    @inline = custom_field.full_width_layout? ? false : true
     @cf = custom_field
   end
 
@@ -243,11 +265,14 @@ class Query < ActiveRecord::Base
     ">t+" => :label_in_more_than,
     "><t+"=> :label_in_the_next_days,
     "t+"  => :label_in,
+    "nd"  => :label_tomorrow,
     "t"   => :label_today,
     "ld"  => :label_yesterday,
+    "nw"  => :label_next_week,
     "w"   => :label_this_week,
     "lw"  => :label_last_week,
     "l2w" => [:label_last_n_weeks, {:count => 2}],
+    "nm"  => :label_next_month,
     "m"   => :label_this_month,
     "lm"  => :label_last_month,
     "y"   => :label_this_year,
@@ -261,7 +286,7 @@ class Query < ActiveRecord::Base
     "=!p" => :label_any_issues_not_in_project,
     "!p"  => :label_no_issues_in_project,
     "*o"  => :label_any_open_issues,
-    "!o"  => :label_no_open_issues
+    "!o"  => :label_no_open_issues,
   }
 
   class_attribute :operators_by_filter_type
@@ -270,7 +295,7 @@ class Query < ActiveRecord::Base
     :list_status => [ "o", "=", "!", "c", "*" ],
     :list_optional => [ "=", "!", "!*", "*" ],
     :list_subprojects => [ "*", "!*", "=", "!" ],
-    :date => [ "=", ">=", "<=", "><", "<t+", ">t+", "><t+", "t+", "t", "ld", "w", "lw", "l2w", "m", "lm", "y", ">t-", "<t-", "><t-", "t-", "!*", "*" ],
+    :date => [ "=", ">=", "<=", "><", "<t+", ">t+", "><t+", "t+", "nd", "t", "ld", "nw", "w", "lw", "l2w", "nm", "m", "lm", "y", ">t-", "<t-", "><t-", "t-", "!*", "*" ],
     :date_past => [ "=", ">=", "<=", "><", ">t-", "<t-", "><t-", "t-", "t", "ld", "w", "lw", "l2w", "m", "lm", "y", "!*", "*" ],
     :string => [ "~", "=", "!~", "!", "!*", "*" ],
     :text => [  "~", "!~", "!*", "*" ],
@@ -414,17 +439,17 @@ class Query < ActiveRecord::Base
       if values_for(field)
         case type_for(field)
         when :integer
-          add_filter_error(field, :invalid) if values_for(field).detect {|v| v.present? && !v.match(/\A[+-]?\d+(,[+-]?\d+)*\z/) }
+          add_filter_error(field, :invalid) if values_for(field).detect {|v| v.present? && !/\A[+-]?\d+(,[+-]?\d+)*\z/.match?(v) }
         when :float
-          add_filter_error(field, :invalid) if values_for(field).detect {|v| v.present? && !v.match(/\A[+-]?\d+(\.\d*)?\z/) }
+          add_filter_error(field, :invalid) if values_for(field).detect {|v| v.present? && !/\A[+-]?\d+(\.\d*)?\z/.match?(v) }
         when :date, :date_past
           case operator_for(field)
           when "=", ">=", "<=", "><"
             add_filter_error(field, :invalid) if values_for(field).detect {|v|
-              v.present? && (!v.match(/\A\d{4}-\d{2}-\d{2}(T\d{2}((:)?\d{2}){0,2}(Z|\d{2}:?\d{2})?)?\z/) || parse_date(v).nil?)
+              v.present? && (!/\A\d{4}-\d{2}-\d{2}(T\d{2}((:)?\d{2}){0,2}(Z|\d{2}:?\d{2})?)?\z/.match?(v) || parse_date(v).nil?)
             }
           when ">t-", "<t-", "t-", ">t+", "<t+", "t+", "><t+", "><t-"
-            add_filter_error(field, :invalid) if values_for(field).detect {|v| v.present? && !v.match(/^\d+$/) }
+            add_filter_error(field, :invalid) if values_for(field).detect {|v| v.present? && !/^\d+$/.match?(v) }
           end
         end
       end
@@ -433,7 +458,7 @@ class Query < ActiveRecord::Base
           # filter requires one or more values
           (values_for(field) and !values_for(field).first.blank?) or
           # filter doesn't require any value
-          ["o", "c", "!*", "*", "t", "ld", "w", "lw", "l2w", "m", "lm", "y", "*o", "!o"].include? operator_for(field)
+          ["o", "c", "!*", "*", "nd", "t", "ld", "nw", "w", "lw", "l2w", "nm", "m", "lm", "y", "*o", "!o"].include? operator_for(field)
     end if filters
   end
 
@@ -581,10 +606,10 @@ class Query < ActiveRecord::Base
 
   # Returns a scope of project statuses that are available as columns or filters
   def project_statuses_values
-    project_statuses =  Project::LABEL_BY_STATUS
-    # Remove archived status from filters
-    project_statuses.delete(9)
-    project_statuses.stringify_keys.invert.to_a
+    [
+      [l(:project_status_active), "#{Project::STATUS_ACTIVE}"],
+      [l(:project_status_closed), "#{Project::STATUS_CLOSED}"]
+    ]
   end
 
   # Adds available filters
@@ -1028,7 +1053,7 @@ class Query < ActiveRecord::Base
       raise "Unknown #{queried_class.name} association #{assoc}" unless customized_class
     end
     where = sql_for_field(field, operator, value, db_table, db_field, true)
-    if operator =~ /[<>]/
+    if /[<>]/.match?(operator)
       where = "(#{where}) AND #{db_table}.#{db_field} <> ''"
     end
     "#{queried_table_name}.#{customized_key} #{not_in} IN (" +
@@ -1119,10 +1144,10 @@ class Query < ActiveRecord::Base
       end
     when "!*"
       sql = "#{db_table}.#{db_field} IS NULL"
-      sql << " OR #{db_table}.#{db_field} = ''" if (is_custom_filter || [:text, :string].include?(type_for(field)))
+      sql += " OR #{db_table}.#{db_field} = ''" if (is_custom_filter || [:text, :string].include?(type_for(field)))
     when "*"
       sql = "#{db_table}.#{db_field} IS NOT NULL"
-      sql << " AND #{db_table}.#{db_field} <> ''" if is_custom_filter
+      sql += " AND #{db_table}.#{db_field} <> ''" if is_custom_filter
     when ">="
       if [:date, :date_past].include?(type_for(field))
         sql = date_clause(db_table, db_field, parse_date(value.first), nil, is_custom_filter)
@@ -1187,6 +1212,9 @@ class Query < ActiveRecord::Base
     when "ld"
       # = yesterday
       sql = relative_date_clause(db_table, db_field, -1, -1, is_custom_filter)
+    when "nd"
+      # = tomorrow
+      sql = relative_date_clause(db_table, db_field, 1, 1, is_custom_filter)
     when "w"
       # = this week
       first_day_of_week = l(:general_first_day_of_week).to_i
@@ -1205,6 +1233,12 @@ class Query < ActiveRecord::Base
       day_of_week = User.current.today.cwday
       days_ago = (day_of_week >= first_day_of_week ? day_of_week - first_day_of_week : day_of_week + 7 - first_day_of_week)
       sql = relative_date_clause(db_table, db_field, - days_ago - 14, - days_ago - 1, is_custom_filter)
+    when "nw"
+      # = next week
+      first_day_of_week = l(:general_first_day_of_week).to_i
+      day_of_week = User.current.today.cwday
+      from = -(day_of_week >= first_day_of_week ? day_of_week - first_day_of_week : day_of_week + 7 - first_day_of_week) + 7
+      sql = relative_date_clause(db_table, db_field, from, from + 6, is_custom_filter)
     when "m"
       # = this month
       date = User.current.today
@@ -1212,6 +1246,10 @@ class Query < ActiveRecord::Base
     when "lm"
       # = last month
       date = User.current.today.prev_month
+      sql = date_clause(db_table, db_field, date.beginning_of_month, date.end_of_month, is_custom_filter)
+    when "nm"
+      # = next month
+      date = User.current.today.next_month
       sql = date_clause(db_table, db_field, date.beginning_of_month, date.end_of_month, is_custom_filter)
     when "y"
       # = this year
@@ -1360,7 +1398,7 @@ class Query < ActiveRecord::Base
 
   # Returns a Date or Time from the given filter value
   def parse_date(arg)
-    if arg.to_s =~ /\A\d{4}-\d{2}-\d{2}T/
+    if /\A\d{4}-\d{2}-\d{2}T/.match?(arg.to_s)
       Time.parse(arg) rescue nil
     else
       Date.parse(arg) rescue nil

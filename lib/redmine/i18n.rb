@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -61,7 +63,7 @@ module Redmine
     # Localizes the given args with user's language
     def lu(user, *args)
       lang = user.try(:language).presence || Setting.default_language
-      ll(lang, *args) 
+      ll(lang, *args)
     end
 
     def format_date(date)
@@ -117,8 +119,9 @@ module Redmine
     # unless :cache => false option is given
     def languages_options(options={})
       options = if options[:cache] == false
+        available_locales = ::I18n.backend.available_locales
         valid_languages.
-          select {|locale| ::I18n.exists?(:general_lang_name, locale)}.
+          select {|locale| available_locales.include?(locale)}.
           map {|lang| [ll(lang.to_s, :general_lang_name), lang.to_s]}.
           sort_by(&:first)
       else

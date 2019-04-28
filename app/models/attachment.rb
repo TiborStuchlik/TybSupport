@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -209,14 +211,14 @@ class Attachment < ActiveRecord::Base
       size = options[:size].to_i
       if size > 0
         # Limit the number of thumbnails per image
-        size = (size / 50) * 50
+        size = (size / 50.0).ceil * 50
         # Maximum thumbnail size
         size = 800 if size > 800
       else
         size = Setting.thumbnails_size.to_i
       end
       size = 100 unless size > 0
-      target = File.join(self.class.thumbnails_storage_path, "#{id}_#{digest}_#{size}.thumb")
+      target = thumbnail_path(size)
 
       begin
         Redmine::Thumbnail.generate(self.diskfile, target, size)
@@ -243,7 +245,7 @@ class Attachment < ActiveRecord::Base
   end
 
   def is_diff?
-    self.filename =~ /\.(patch|diff)$/i
+    /\.(patch|diff)$/i.match?(filename)
   end
 
   def is_pdf?
@@ -463,6 +465,14 @@ class Attachment < ActiveRecord::Base
     if disk_filename.present? && File.exist?(diskfile)
       File.delete(diskfile)
     end
+    Dir[thumbnail_path("*")].each do |thumb|
+      File.delete(thumb)
+    end
+  end
+
+  def thumbnail_path(size)
+    File.join(self.class.thumbnails_storage_path,
+              "#{digest}_#{filesize}_#{size}.thumb")
   end
 
   def sanitize_filename(value)
@@ -484,7 +494,7 @@ class Attachment < ActiveRecord::Base
   def self.disk_filename(filename, directory=nil)
     timestamp = DateTime.now.strftime("%y%m%d%H%M%S")
     ascii = ''
-    if filename =~ %r{^[a-zA-Z0-9_\.\-]*$} && filename.length <= 50
+    if %r{^[a-zA-Z0-9_\.\-]*$}.match?(filename) && filename.length <= 50
       ascii = filename
     else
       ascii = Digest::MD5.hexdigest(filename)

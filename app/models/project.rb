@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -23,12 +25,6 @@ class Project < ActiveRecord::Base
   STATUS_ACTIVE     = 1
   STATUS_CLOSED     = 5
   STATUS_ARCHIVED   = 9
-
-  LABEL_BY_STATUS = {
-    1 => l(:project_status_active),
-    5 => l(:project_status_closed),
-    9 => l(:project_status_archived),
-  }
 
   # Maximum length for project identifiers
   IDENTIFIER_MAX_LENGTH = 100
@@ -185,7 +181,7 @@ class Project < ActiveRecord::Base
     base_statement = (perm && perm.read? ? "#{Project.table_name}.status <> #{Project::STATUS_ARCHIVED}" : "#{Project.table_name}.status = #{Project::STATUS_ACTIVE}")
     if !options[:skip_pre_condition] && perm && perm.project_module
       # If the permission belongs to a project module, make sure the module is enabled
-      base_statement << " AND EXISTS (SELECT 1 AS one FROM #{EnabledModule.table_name} em WHERE em.project_id = #{Project.table_name}.id AND em.name='#{perm.project_module}')"
+      base_statement += " AND EXISTS (SELECT 1 AS one FROM #{EnabledModule.table_name} em WHERE em.project_id = #{Project.table_name}.id AND em.name='#{perm.project_module}')"
     end
     if project = options[:project]
       project_statement = project.project_condition(options[:with_subprojects])
@@ -317,7 +313,7 @@ class Project < ActiveRecord::Base
   end
 
   def self.find(*args)
-    if args.first && args.first.is_a?(String) && !args.first.match(/^\d*$/)
+    if args.first && args.first.is_a?(String) && !/^\d*$/.match?(args.first)
       project = find_by_identifier(*args)
       raise ActiveRecord::RecordNotFound, "Couldn't find Project with identifier=#{args.first}" if project.nil?
       project
@@ -357,7 +353,7 @@ class Project < ActiveRecord::Base
       nil
     else
       # id is used for projects with a numeric identifier (compatibility)
-      @to_param ||= (identifier.to_s =~ %r{^\d*$} ? id.to_s : identifier)
+      @to_param ||= (%r{^\d*$}.match?(identifier.to_s) ? id.to_s : identifier)
     end
   end
 
@@ -393,15 +389,11 @@ class Project < ActiveRecord::Base
     true
   end
 
-  # Unarchives the project
-  # All its ancestors must be active
+  # Unarchives the project and its archived ancestors
   def unarchive
-    return false if ancestors.detect {|a| a.archived?}
-    new_status = STATUS_ACTIVE
-    if parent
-      new_status = parent.status
-    end
-    update_attribute :status, new_status
+    new_status = ancestors.any?(&:closed?) ? STATUS_CLOSED : STATUS_ACTIVE
+    self_and_ancestors.status(STATUS_ARCHIVED).update_all :status => new_status
+    reload
   end
 
   def close
@@ -630,7 +622,7 @@ class Project < ActiveRecord::Base
   end
 
   def css_classes
-    s = 'project'
+    s = +'project'
     s << ' root' if root?
     s << ' child' if child?
     s << (leaf? ? ' leaf' : ' parent')

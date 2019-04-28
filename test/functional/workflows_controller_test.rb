@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -18,7 +20,7 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class WorkflowsControllerTest < Redmine::ControllerTest
-  fixtures :roles, :trackers, :workflows, :users, :issue_statuses
+  fixtures :roles, :trackers, :workflows, :users, :issue_statuses, :custom_fields
 
   def setup
     User.current = nil

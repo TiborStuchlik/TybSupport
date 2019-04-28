@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -33,6 +35,11 @@ class MemberRole < ActiveRecord::Base
 
   def inherited?
     !inherited_from.nil?
+  end
+
+  # Returns the MemberRole from which self was inherited, or nil
+  def inherited_from_member_role
+    MemberRole.find_by_id(inherited_from) if inherited_from
   end
 
   # Destroys the MemberRole without destroying its Member if it doesn't have

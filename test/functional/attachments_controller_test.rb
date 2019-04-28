@@ -1,5 +1,5 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
 # Copyright (C) 2006-2017  Jean-Philippe Lang
 #
@@ -143,8 +143,6 @@ class AttachmentsControllerTest < Redmine::ControllerTest
     assert a.save
     assert_equal 'japanese-utf-8.txt', a.filename
 
-    str_japanese = "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e".force_encoding('UTF-8')
-
     get :show, :params => {
         :id => a.id
       }
@@ -152,7 +150,7 @@ class AttachmentsControllerTest < Redmine::ControllerTest
     assert_equal 'text/html', @response.content_type
     assert_select 'tr#L1' do
       assert_select 'th.line-num', :text => '1'
-      assert_select 'td', :text => /#{str_japanese}/
+      assert_select 'td', :text => /日本語/
     end
   end
 
@@ -407,7 +405,7 @@ class AttachmentsControllerTest < Redmine::ControllerTest
     end
 
     def test_thumbnail_should_round_size
-      Redmine::Thumbnail.expects(:generate).with {|source, target, size| size == 250}
+      Redmine::Thumbnail.expects(:generate).with {|source, target, size| size == 300}
 
       @request.session[:user_id] = 2
       get :thumbnail, :params => {
@@ -463,6 +461,9 @@ class AttachmentsControllerTest < Redmine::ControllerTest
         assert_select 'input[name=?][value=?]', 'attachments[4][description]', 'This is a Ruby source file'
       end
     end
+
+    # Link to the container in heading
+    assert_select 'h2 a', :text => "Feature request #2"
   end
 
   def test_edit_all_with_invalid_container_class_should_return_404
