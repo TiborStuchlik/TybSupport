@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -40,7 +42,7 @@ class Redmine::ApiTest::AttachmentsTest < Redmine::ApiTest::Base
   test "GET /attachments/:id.xml should return the attachment" do
     get '/attachments/7.xml', :headers => credentials('jsmith')
     assert_response :success
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
     assert_select 'attachment id', :text => '7' do
       assert_select '~ filename', :text => 'archive.zip'
       assert_select '~ content_url', :text => 'http://www.example.com/attachments/download/7/archive.zip'
@@ -50,7 +52,7 @@ class Redmine::ApiTest::AttachmentsTest < Redmine::ApiTest::Base
   test "GET /attachments/:id.xml for image should include thumbnail_url" do
     get '/attachments/16.xml', :headers => credentials('jsmith')
     assert_response :success
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
     assert_select 'attachment id:contains(16)' do
       assert_select '~ thumbnail_url', :text => 'http://www.example.com/attachments/thumbnail/16'
     end
@@ -59,20 +61,17 @@ class Redmine::ApiTest::AttachmentsTest < Redmine::ApiTest::Base
   test "GET /attachments/:id.xml should deny access without credentials" do
     get '/attachments/7.xml'
     assert_response 401
-    set_tmp_attachments_directory
   end
 
   test "GET /attachments/download/:id/:filename should return the attachment content" do
     get '/attachments/download/7/archive.zip', :headers => credentials('jsmith')
     assert_response :success
-    assert_equal 'application/zip', @response.content_type
-    set_tmp_attachments_directory
+    assert_equal 'application/zip', @response.media_type
   end
 
   test "GET /attachments/download/:id/:filename should deny access without credentials" do
     get '/attachments/download/7/archive.zip'
     assert_response 401
-    set_tmp_attachments_directory
   end
 
   test "GET /attachments/thumbnail/:id should return the thumbnail" do
@@ -84,7 +83,7 @@ class Redmine::ApiTest::AttachmentsTest < Redmine::ApiTest::Base
   test "DELETE /attachments/:id.xml should return ok and delete Attachment" do
     assert_difference 'Attachment.count', -1 do
       delete '/attachments/7.xml', :headers => credentials('jsmith')
-      assert_response :ok
+      assert_response :no_content
       assert_equal '', response.body
     end
     assert_nil Attachment.find_by_id(7)
@@ -93,7 +92,7 @@ class Redmine::ApiTest::AttachmentsTest < Redmine::ApiTest::Base
   test "DELETE /attachments/:id.json should return ok and delete Attachment" do
     assert_difference 'Attachment.count', -1 do
       delete '/attachments/7.json', :headers => credentials('jsmith')
-      assert_response :ok
+      assert_response :no_content
       assert_equal '', response.body
     end
     assert_nil Attachment.find_by_id(7)
@@ -104,8 +103,8 @@ class Redmine::ApiTest::AttachmentsTest < Redmine::ApiTest::Base
       :params => {:attachment => {:filename => 'renamed.zip', :description => 'updated'}},
       :headers => credentials('jsmith')
 
-    assert_response :ok
-    assert_equal 'application/json', response.content_type
+    assert_response :no_content
+    assert_nil response.media_type
     attachment = Attachment.find(7)
     assert_equal 'renamed.zip', attachment.filename
     assert_equal 'updated', attachment.description
@@ -117,7 +116,7 @@ class Redmine::ApiTest::AttachmentsTest < Redmine::ApiTest::Base
       :headers => credentials('jsmith')
 
     assert_response 422
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
     assert_include "File cannot be blank", json['errors']
   end
@@ -130,7 +129,7 @@ class Redmine::ApiTest::AttachmentsTest < Redmine::ApiTest::Base
           "CONTENT_TYPE" => 'application/octet-stream'
         }.merge(credentials('jsmith'))
       assert_response :created
-      assert_equal 'application/xml', response.content_type
+      assert_equal 'application/xml', response.media_type
     end
 
     xml = Hash.from_xml(response.body)
@@ -161,7 +160,7 @@ class Redmine::ApiTest::AttachmentsTest < Redmine::ApiTest::Base
           "CONTENT_TYPE" => 'application/octet-stream'
         }.merge(credentials('jsmith'))
       assert_response :created
-      assert_equal 'application/json', response.content_type
+      assert_equal 'application/json', response.media_type
     end
 
     json = ActiveSupport::JSON.decode(response.body)
@@ -220,14 +219,11 @@ class Redmine::ApiTest::AttachmentsTest < Redmine::ApiTest::Base
           "CONTENT_TYPE" => 'application/octet-stream'
         }.merge(credentials('jsmith'))
       assert_response :created
-
     end
-
     json = ActiveSupport::JSON.decode(response.body)
     assert_kind_of Hash, json['upload']
     token = json['upload']['token']
     assert token.present?
-
     assert attachment = Attachment.find_by_token(token)
     assert_equal 0, attachment.filesize
     assert attachment.digest.present?

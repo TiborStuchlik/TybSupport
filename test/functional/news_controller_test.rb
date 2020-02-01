@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -33,17 +35,13 @@ class NewsControllerTest < Redmine::ControllerTest
   end
 
   def test_index_with_project
-    get :index, :params => {
-        :project_id => 1
-      }
+    get(:index, :params => {:project_id => 1})
     assert_response :success
     assert_select 'h3 a', :text => 'eCookbook first release !'
   end
 
   def test_index_with_invalid_project_should_respond_with_404
-    get :index, :params => {
-        :project_id => 999
-      }
+    get(:index, :params => {:project_id => 999})
     assert_response 404
   end
 
@@ -56,9 +54,7 @@ class NewsControllerTest < Redmine::ControllerTest
   end
 
   def test_show
-    get :show, :params => {
-        :id => 1
-      }
+    get(:show, :params => {:id => 1})
     assert_response :success
     assert_select 'h2', :text => 'eCookbook first release !'
   end
@@ -68,9 +64,7 @@ class NewsControllerTest < Redmine::ControllerTest
     attachment.container = News.find(1)
     attachment.save!
 
-    get :show, :params => {
-        :id => 1
-      }
+    get(:show, :params => {:id => 1})
     assert_response :success
     assert_select 'a', :text => attachment.filename
   end
@@ -81,9 +75,7 @@ class NewsControllerTest < Redmine::ControllerTest
     user.pref.save!
 
     @request.session[:user_id] = 1
-    get :show, :params => {
-        :id => 1
-      }
+    get(:show, :params => {:id => 1})
     assert_response :success
 
     comments = css_select('#comments .wiki').map(&:text).map(&:strip)
@@ -91,17 +83,13 @@ class NewsControllerTest < Redmine::ControllerTest
   end
 
   def test_show_not_found
-    get :show, :params => {
-        :id => 999
-      }
+    get(:show, :params => {:id => 999})
     assert_response 404
   end
 
   def test_get_new
     @request.session[:user_id] = 2
-    get :new, :params => {
-        :project_id => 1
-      }
+    get(:new, :params => {:project_id => 1})
     assert_response :success
     assert_select 'input[name=?]', 'news[title]'
   end
@@ -111,14 +99,17 @@ class NewsControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
 
     with_settings :notified_events => %w(news_added) do
-      post :create, :params => {
+      post(
+        :create,
+        :params => {
           :project_id => 1,
           :news => {
             :title => 'NewsControllerTest',
             :description => 'This is the description',
-            :summary => '' 
+            :summary => ''
           }
         }
+      )
     end
     assert_redirected_to '/projects/ecookbook/news'
 
@@ -135,17 +126,21 @@ class NewsControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     assert_difference 'News.count' do
       assert_difference 'Attachment.count' do
-        post :create, :params => {
+        post(
+          :create,
+          :params => {
             :project_id => 1,
             :news => {
               :title => 'Test',
-              :description => 'This is the description' 
-            },  
+              :description => 'This is the description'
+            },
             :attachments => {
               '1' => {
-              'file' => uploaded_test_file('testfile.txt', 'text/plain')}    
+                'file' => uploaded_test_file('testfile.txt', 'text/plain')
+              }
             }
           }
+        )
       end
     end
     attachment = Attachment.order('id DESC').first
@@ -155,35 +150,39 @@ class NewsControllerTest < Redmine::ControllerTest
 
   def test_post_create_with_validation_failure
     @request.session[:user_id] = 2
-    post :create, :params => {
+    post(
+      :create,
+      :params => {
         :project_id => 1,
         :news => {
           :title => '',
           :description => 'This is the description',
-          :summary => '' 
+          :summary => ''
         }
       }
+    )
     assert_response :success
     assert_select_error /title cannot be blank/i
   end
 
   def test_get_edit
     @request.session[:user_id] = 2
-    get :edit, :params => {
-        :id => 1
-      }
+    get(:edit, :params => {:id => 1})
     assert_response :success
     assert_select 'input[name=?][value=?]', 'news[title]', 'eCookbook first release !'
   end
 
   def test_put_update
     @request.session[:user_id] = 2
-    put :update, :params => {
+    put(
+      :update,
+      :params => {
         :id => 1,
         :news => {
-          :description => 'Description changed by test_post_edit' 
+          :description => 'Description changed by test_post_edit'
         }
       }
+    )
     assert_redirected_to '/news/1'
     news = News.find(1)
     assert_equal 'Description changed by test_post_edit', news.description
@@ -194,16 +193,20 @@ class NewsControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     assert_no_difference 'News.count' do
       assert_difference 'Attachment.count' do
-        put :update, :params => {
+        put(
+          :update,
+          :params => {
             :id => 1,
             :news => {
-              :description => 'This is the description' 
-            },  
+              :description => 'This is the description'
+            },
             :attachments => {
               '1' => {
-              'file' => uploaded_test_file('testfile.txt', 'text/plain')}    
+                'file' => uploaded_test_file('testfile.txt', 'text/plain')
+              }
             }
           }
+        )
       end
     end
     attachment = Attachment.order('id DESC').first
@@ -212,21 +215,22 @@ class NewsControllerTest < Redmine::ControllerTest
 
   def test_update_with_failure
     @request.session[:user_id] = 2
-    put :update, :params => {
+    put(
+      :update,
+      :params => {
         :id => 1,
         :news => {
-          :description => '' 
+          :description => ''
         }
       }
+    )
     assert_response :success
     assert_select_error /description cannot be blank/i
   end
 
   def test_destroy
     @request.session[:user_id] = 2
-    delete :destroy, :params => {
-        :id => 1
-      }
+    delete(:destroy, :params => {:id => 1})
     assert_redirected_to '/projects/ecookbook/news'
     assert_nil News.find_by_id(1)
   end

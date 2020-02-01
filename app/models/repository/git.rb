@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 # Copyright (C) 2007  Patrick Aljord patcito@ŋmail.com
 #
 # This program is free software; you can redistribute it and/or
@@ -41,8 +43,10 @@ class Repository::Git < Repository
 
   def report_last_commit
     return false if extra_info.nil?
+
     v = extra_info["extra_report_last_commit"]
     return false if v.nil?
+
     v.to_s != '0'
   end
 
@@ -82,7 +86,7 @@ class Repository::Git < Repository
 
   def default_branch
     scm.default_branch
-  rescue Exception => e
+  rescue => e
     logger.error "git: error during get default branch: #{e.message}"
     nil
   end
@@ -239,14 +243,16 @@ class Repository::Git < Repository
     h['branches'].map{|br, hs| hs['last_scmid']}
   end
 
-  def latest_changesets(path,rev,limit=10)
+  def latest_changesets(path, rev, limit=10)
     revisions = scm.revisions(path, nil, rev, :limit => limit, :all => false)
     return [] if revisions.nil? || revisions.empty?
+
     changesets.where(:scmid => revisions.map {|c| c.scmid}).to_a
   end
 
   def clear_extra_info_of_changesets
     return if extra_info.nil?
+
     v = extra_info["extra_report_last_commit"]
     write_attribute(:extra_info, nil)
     h = {}

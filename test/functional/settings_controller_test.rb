@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -139,10 +141,14 @@ class SettingsControllerTest < Redmine::ControllerTest
       }
     }
     assert_redirected_to '/settings'
-    assert_equal([
-      {"keywords" => "resolves", "status_id" => "3"},
-      {"keywords" => "closes", "status_id" => "5", "done_ratio" => "100", "if_tracker_id" => "2"}
-    ], Setting.commit_update_keywords)
+    assert_equal(
+      [
+        {"keywords" => "resolves", "status_id" => "3"},
+        {"keywords" => "closes", "status_id" => "5",
+         "done_ratio" => "100", "if_tracker_id" => "2"}
+      ],
+      Setting.commit_update_keywords
+    )
   end
 
   def test_post_edit_with_invalid_setting_should_not_error
@@ -194,11 +200,11 @@ class SettingsControllerTest < Redmine::ControllerTest
     assert_nil (mail = ActionMailer::Base.deliveries.last)
   end
 
-
   def test_get_plugin_settings
     ActionController::Base.append_view_path(File.join(Rails.root, "test/fixtures/plugins"))
     Redmine::Plugin.register :foo do
       settings :partial => "foo_plugin/foo_plugin_settings"
+      directory 'test/fixtures/plugins/foo_plugin'
     end
     Setting.plugin_foo = {'sample_setting' => 'Plugin setting value'}
 
@@ -218,7 +224,9 @@ class SettingsControllerTest < Redmine::ControllerTest
   end
 
   def test_get_non_configurable_plugin_settings
-    Redmine::Plugin.register(:foo) {}
+    Redmine::Plugin.register(:foo) do
+      directory 'test/fixtures/plugins/foo_plugin'
+    end
 
     get :plugin, :params => {:id => 'foo'}
     assert_response 404
@@ -231,6 +239,7 @@ class SettingsControllerTest < Redmine::ControllerTest
     Redmine::Plugin.register(:foo) do
       settings :partial => 'not blank', # so that configurable? is true
         :default => {'sample_setting' => 'Plugin setting value'}
+      directory 'test/fixtures/plugins/foo_plugin'
     end
 
     post :plugin, :params => {
@@ -246,6 +255,7 @@ class SettingsControllerTest < Redmine::ControllerTest
     Redmine::Plugin.register(:foo) do
       settings :partial => 'not blank', # so that configurable? is true
         :default => {'sample_setting' => 'Plugin setting value'}
+      directory 'test/fixtures/plugins/foo_plugin'
     end
 
     post :plugin, :params => {
@@ -257,7 +267,9 @@ class SettingsControllerTest < Redmine::ControllerTest
   end
 
   def test_post_non_configurable_plugin_settings
-    Redmine::Plugin.register(:foo) {}
+    Redmine::Plugin.register(:foo) do
+      directory 'test/fixtures/plugins/foo_plugin'
+    end
 
     post :plugin, :params => {
       :id => 'foo',

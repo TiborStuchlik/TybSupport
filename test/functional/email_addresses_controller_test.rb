@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -125,8 +127,8 @@ class EmailAddressesControllerTest < Redmine::ControllerTest
           :address => 'something@example.fr'
         }
       }
-
-    assert_not_nil (mail = ActionMailer::Base.deliveries.last)
+    mail = ActionMailer::Base.deliveries.last
+    assert_not_nil mail
     assert_mail_body_match '0.0.0.0', mail
     assert_mail_body_match I18n.t(:mail_body_security_notification_add, field: I18n.t(:field_mail), value: 'something@example.fr'), mail
     assert_select_email do
@@ -177,14 +179,13 @@ class EmailAddressesControllerTest < Redmine::ControllerTest
         :notify => '0'
       },
       :xhr => true
-
-    assert_not_nil (mail = ActionMailer::Base.deliveries.last)
+    mail = ActionMailer::Base.deliveries.last
+    assert_not_nil mail
     assert_mail_body_match I18n.t(:mail_body_security_notification_notify_disabled, value: 'another@somenet.foo'), mail
 
     # The changed address should be notified for security purposes
     assert [mail.bcc, mail.cc].flatten.include?('another@somenet.foo')
   end
-
 
   def test_destroy
     @request.session[:user_id] = 2
@@ -236,8 +237,8 @@ class EmailAddressesControllerTest < Redmine::ControllerTest
         :id => email.id
       },
       :xhr => true
-
-    assert_not_nil (mail = ActionMailer::Base.deliveries.last)
+    mail = ActionMailer::Base.deliveries.last
+    assert_not_nil mail
     assert_mail_body_match I18n.t(:mail_body_security_notification_remove, field: I18n.t(:field_mail), value: 'another@somenet.foo'), mail
 
     # The removed address should be notified for security purposes

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -103,7 +105,8 @@ class Enumeration < ActiveRecord::Base
 
   # Does the +new+ Hash override the previous Enumeration?
   def self.overriding_change?(new, previous)
-    if (same_active_state?(new['active'], previous.active)) && same_custom_values?(new,previous)
+    if (same_active_state?(new['active'], previous.active)) &&
+          same_custom_values?(new, previous)
       return false
     else
       return true

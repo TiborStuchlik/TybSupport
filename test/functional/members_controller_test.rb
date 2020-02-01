@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -54,7 +56,7 @@ class MembersControllerTest < Redmine::ControllerTest
       },
       :xhr => true
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
   end
 
   def test_create
@@ -131,7 +133,7 @@ class MembersControllerTest < Redmine::ControllerTest
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
     assert User.find(7).member_of?(Project.find(1))
     assert User.find(8).member_of?(Project.find(1))
@@ -150,7 +152,7 @@ class MembersControllerTest < Redmine::ControllerTest
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
     assert_match /alert/, response.body, "Alert message not sent"
   end
@@ -240,7 +242,7 @@ class MembersControllerTest < Redmine::ControllerTest
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
     member = Member.find(2)
     assert_equal [1], member.role_ids
@@ -301,7 +303,7 @@ class MembersControllerTest < Redmine::ControllerTest
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
     assert_nil Member.find_by_id(2)
     assert_include 'tab-content-members', response.body

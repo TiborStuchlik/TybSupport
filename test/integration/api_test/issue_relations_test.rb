@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -31,7 +33,7 @@ class Redmine::ApiTest::IssueRelationsTest < Redmine::ApiTest::Base
     get '/issues/9/relations.xml', :headers => credentials('jsmith')
 
     assert_response :success
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
 
     assert_select 'relations[type=array] relation id', :text => '1'
   end
@@ -49,7 +51,7 @@ class Redmine::ApiTest::IssueRelationsTest < Redmine::ApiTest::Base
     assert_equal 'relates', relation.relation_type
 
     assert_response :created
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
     assert_select 'relation id', :text => relation.id.to_s
   end
 
@@ -68,7 +70,7 @@ class Redmine::ApiTest::IssueRelationsTest < Redmine::ApiTest::Base
     get '/relations/2.xml', :headers => credentials('jsmith')
 
     assert_response :success
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
     assert_select 'relation id', :text => '2'
   end
 
@@ -77,7 +79,7 @@ class Redmine::ApiTest::IssueRelationsTest < Redmine::ApiTest::Base
       delete '/relations/2.xml', :headers => credentials('jsmith')
     end
 
-    assert_response :ok
+    assert_response :no_content
     assert_equal '', @response.body
     assert_nil IssueRelation.find_by_id(2)
   end

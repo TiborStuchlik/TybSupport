@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -32,7 +34,7 @@ class SysControllerTest < Redmine::ControllerTest
   def test_projects_with_repository_enabled
     get :projects
     assert_response :success
-    assert_equal 'application/json', @response.content_type
+    assert_equal 'application/json', @response.media_type
 
     data = ActiveSupport::JSON.decode(response.body)
 
@@ -54,7 +56,7 @@ class SysControllerTest < Redmine::ControllerTest
       :repository => { :url => 'file:///create/project/repository/subproject2'}
     }
     assert_response :created
-    assert_equal 'application/json', @response.content_type
+    assert_equal 'application/json', @response.media_type
 
     r = Project.find(4).repository
     assert r.is_a?(Repository::Subversion)

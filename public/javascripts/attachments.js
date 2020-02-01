@@ -1,5 +1,5 @@
 /* Redmine - project management software
-   Copyright (C) 2006-2017  Jean-Philippe Lang */
+   Copyright (C) 2006-2019  Jean-Philippe Lang */
 
 function addFile(inputEl, file, eagerUpload) {
   var attachmentsFields = $(inputEl).closest('.attachments_form').find('.attachments_fields');
@@ -103,7 +103,7 @@ function uploadBlob(blob, uploadUrl, attachmentId, options) {
   }, options);
 
   uploadUrl = uploadUrl + '?attachment_id=' + attachmentId;
-  if (blob instanceof window.File) {
+  if (blob instanceof window.Blob) {
     uploadUrl += '&filename=' + encodeURIComponent(blob.name);
     uploadUrl += '&content_type=' + encodeURIComponent(blob.type);
   }
@@ -201,7 +201,8 @@ function setupFileDrop() {
       $(this).on({
           dragover: dragOverHandler,
           dragleave: dragOutHandler,
-          drop: handleFileDropEvent
+          drop: handleFileDropEvent,
+          paste: copyImageFromClipboard
       }).addClass('filedroplistner');
     });
   }
@@ -247,6 +248,35 @@ function addInlineAttachmentMarkup(file) {
       'selectionEnd': cursorPosition + 1
     });
 
+  }
+}
+
+function copyImageFromClipboard(e) {
+  if (!$(e.target).hasClass('wiki-edit')) { return; }
+  var clipboardData = e.clipboardData || e.originalEvent.clipboardData
+  if (!clipboardData) { return; }
+  if (clipboardData.types.some(function(t){ return /^text/.test(t); })) { return; }
+
+  var items = clipboardData.items
+  for (var i = 0 ; i < items.length ; i++) {
+    var item = items[i];
+    if (item.type.indexOf("image") != -1) {
+      var blob = item.getAsFile();
+      var date = new Date();
+      var filename = 'clipboard-'
+        + date.getFullYear()
+        + ('0'+(date.getMonth()+1)).slice(-2)
+        + ('0'+date.getDate()).slice(-2)
+        + ('0'+date.getHours()).slice(-2)
+        + ('0'+date.getMinutes()).slice(-2)
+        + '-' + randomKey(5).toLocaleLowerCase()
+        + '.' + blob.name.split('.').pop();
+      var file = new Blob([blob], {type: blob.type});
+      file.name = filename;
+      var inputEl = $('input:file.filedrop').first()
+      handleFileDropEvent.target = e.target;
+      addFile(inputEl, file, true);
+    }
   }
 }
 

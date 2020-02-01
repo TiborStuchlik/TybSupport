@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -93,7 +95,7 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
           :path => repository_path_hash(['test'])[:param]
         }
       assert_response :success
-      assert_equal 'application/octet-stream', @response.content_type
+      assert_equal 'application/octet-stream', @response.media_type
     end
 
     def test_show_non_ascii_contents
@@ -110,8 +112,7 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
                "when Encoding.default_external is not UTF-8. " +
                "Current value is '#{Encoding.default_external.to_s}'"
         else
-          str_japanese = "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e".force_encoding('UTF-8')
-          assert_select 'tr#L3 td.line-code', :text => /#{str_japanese}/
+          assert_select 'tr#L3 td.line-code', :text => /日本語/
         end
       end
     end
@@ -137,7 +138,7 @@ class RepositoriesFilesystemControllerTest < Redmine::RepositoryControllerTest
             :path => repository_path_hash(['japanese', 'big-file.txt'])[:param]
           }
         assert_response :success
-        assert_equal 'text/html', @response.content_type
+        assert_equal 'text/html', @response.media_type
         assert_select 'p.nodata'
       end
     end

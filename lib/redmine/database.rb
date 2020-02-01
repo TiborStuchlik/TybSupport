@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,7 +23,7 @@ module Redmine
     class << self
       # Returns true if the database is PostgreSQL
       def postgresql?
-        (ActiveRecord::Base.connection.adapter_name =~ /postgresql/i).present?
+        /postgresql/i.match?(ActiveRecord::Base.connection.adapter_name)
       end
 
       # Returns the PostgreSQL version or nil if another DBMS is used
@@ -46,7 +48,7 @@ module Redmine
 
       # Returns true if the database is MySQL
       def mysql?
-        (ActiveRecord::Base.connection.adapter_name =~ /mysql/i).present?
+        /mysql/i.match?(ActiveRecord::Base.connection.adapter_name)
       end
 
       # Returns a SQL statement for case/accent (if possible) insensitive match
@@ -78,7 +80,7 @@ module Redmine
           if time_zone
             user_identifier = ActiveSupport::TimeZone.find_tzinfo(time_zone.name).identifier
             local_identifier = ActiveSupport::TimeZone.find_tzinfo(Time.zone.name).identifier
-            "CONVERT_TZ(DATE(#{column}),'#{local_identifier}', '#{user_identifier}')"
+            "DATE(CONVERT_TZ(#{column},'#{local_identifier}', '#{user_identifier}'))"
           else
             "DATE(#{column})"
           end

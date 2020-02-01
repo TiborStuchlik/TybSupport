@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -67,6 +69,26 @@ class QueriesControllerTest < Redmine::ControllerTest
     assert_response 404
   end
 
+  def test_new_should_not_render_show_inline_columns_option_for_query_without_available_inline_columns
+    @request.session[:user_id] = 1
+    get :new, :params => {
+        :type => 'ProjectQuery'
+      }
+
+    assert_response :success
+    assert_select 'p[class=?]', 'block_columns', 0
+  end
+
+  def test_new_should_not_render_show_totals_option_for_query_without_totable_columns
+    @request.session[:user_id] = 1
+    get :new, :params => {
+        :type => 'ProjectQuery'
+      }
+
+    assert_response :success
+    assert_select 'p[class=?]', 'totables_columns', 0
+  end
+
   def test_new_time_entry_query
     @request.session[:user_id] = 2
     get :new, :params => {
@@ -75,6 +97,39 @@ class QueriesControllerTest < Redmine::ControllerTest
       }
     assert_response :success
     assert_select 'input[name=type][value=?]', 'TimeEntryQuery'
+    assert_select 'p[class=?]', 'totable_columns', 1
+    assert_select 'p[class=?]', 'block_columns', 0
+  end
+
+  def test_new_project_query_for_projects
+    @request.session[:user_id] = 1
+    get :new, :params => {
+        :type => 'ProjectQuery'
+      }
+    assert_response :success
+    assert_select 'input[name=type][value=?]', 'ProjectQuery'
+  end
+
+  def test_new_project_query_should_not_render_roles_visibility_options
+    @request.session[:user_id] = 1
+    get :new, :params => {
+        :type => 'ProjectQuery'
+      }
+
+    assert_response :success
+    assert_select 'input[id=?]', 'query_visibility_0', 1
+    assert_select 'input[id=?]', 'query_visibility_2', 1
+    assert_select 'input[id=?]', 'query_visibility_1', 0
+  end
+
+  def test_new_project_query_should_not_render_for_all_projects_option
+    @request.session[:user_id] = 1
+    get :new, :params => {
+        :type => 'ProjectQuery'
+      }
+
+    assert_response :success
+    assert_select 'input[name=?]', 'for_all_projects', 0
   end
 
   def test_new_time_entry_query_should_select_spent_time_from_main_menu
@@ -96,6 +151,41 @@ class QueriesControllerTest < Redmine::ControllerTest
         :type => 'TimeEntryQuery'
       }
     assert_response :success
+  end
+
+  def test_new_with_gantt_params
+    @request.session[:user_id] = 2
+    get :new, :params => { :gantt => 1 }
+    assert_response :success
+
+    assert_select 'input[type="hidden"]#gantt', 1
+    assert_select 'fieldset#options'
+    assert_select 'fieldset#filters'
+    assert_select 'fieldset legend', { :text => 'Sort', :count => 0 }
+    assert_select 'fieldset#columns'
+  end
+
+  def test_new_with_calendar_params
+    @request.session[:user_id] = 2
+    get :new, :params => { :calendar => 1 }
+    assert_response :success
+
+    assert_select 'input[type="hidden"]#calendar', 1
+    assert_select 'fieldset#options', :count => 0
+    assert_select 'fieldset#filters'
+    assert_select 'fieldset legend', { :text => 'Sort', :count => 0 }
+    assert_select 'fieldset#columns', :count => 0
+  end
+
+  def test_new_without_gantt_and_calendar_params
+    @request.session[:user_id] = 2
+    get :new
+    assert_response :success
+
+    assert_select 'fieldset#options'
+    assert_select 'fieldset#filters'
+    assert_select 'fieldset legend', { :text => 'Sort' }
+    assert_select 'fieldset#columns'
   end
 
   def test_create_project_public_query
@@ -293,7 +383,8 @@ class QueriesControllerTest < Redmine::ControllerTest
           :query => {
             :name => "test_create_from_gantt",
             :draw_relations => '1',
-            :draw_progress_line => '1'
+            :draw_progress_line => '1',
+            :draw_selected_columns => '1'
           }
         }
       assert_response 302
@@ -302,6 +393,7 @@ class QueriesControllerTest < Redmine::ControllerTest
     assert_redirected_to "/issues/gantt?query_id=#{query.id}"
     assert_equal true, query.draw_relations
     assert_equal true, query.draw_progress_line
+    assert_equal true, query.draw_selected_columns
   end
 
   def test_create_project_query_from_gantt
@@ -319,7 +411,8 @@ class QueriesControllerTest < Redmine::ControllerTest
           :query => {
             :name => "test_create_from_gantt",
             :draw_relations => '0',
-            :draw_progress_line => '0'
+            :draw_progress_line => '0',
+            :draw_selected_columns => '0'
           }
         }
       assert_response 302
@@ -328,6 +421,7 @@ class QueriesControllerTest < Redmine::ControllerTest
     assert_redirected_to "/projects/ecookbook/issues/gantt?query_id=#{query.id}"
     assert_equal false, query.draw_relations
     assert_equal false, query.draw_progress_line
+    assert_equal false, query.draw_selected_columns
   end
 
   def test_create_project_public_query_should_force_private_without_manage_public_queries_permission
@@ -432,6 +526,32 @@ class QueriesControllerTest < Redmine::ControllerTest
     assert_redirected_to :controller => 'timelog', :action => 'index', :project_id => 'ecookbook', :query_id => q.id
     assert q.is_public?
     assert q.has_default_columns?
+    assert q.valid?
+  end
+
+  def test_create_public_project_query
+    @request.session[:user_id] = 1
+
+    q = new_record(ProjectQuery) do
+      post :create, :params => {
+          :type => 'ProjectQuery',
+          :default_columns => '1',
+          :f => ["status"],
+          :op => {
+            "status" => "="
+          },
+          :v => {
+            "status" => ['1']
+          },
+          :query => {
+            "name" => "test_new_project_public_query", "visibility" => "2"
+          }
+        }
+    end
+
+    assert_redirected_to :controller => 'projects', :action => 'index', :query_id => q.id
+
+    assert q.is_public?
     assert q.valid?
   end
 
@@ -586,7 +706,7 @@ class QueriesControllerTest < Redmine::ControllerTest
       }
 
     assert_response :success
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
     assert_include ["eCookbook - 2.0", "3", "open"], json
   end
@@ -600,7 +720,7 @@ class QueriesControllerTest < Redmine::ControllerTest
       }
 
     assert_response :success
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
     assert_include ["eCookbook - 2.0", "3", "open"], json
   end
@@ -615,7 +735,7 @@ class QueriesControllerTest < Redmine::ControllerTest
       }
 
     assert_response :success
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
 
     # response includes visible version
@@ -636,7 +756,7 @@ class QueriesControllerTest < Redmine::ControllerTest
       }
 
     assert_response :success
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
     assert_equal 4, json.count
     assert_include ["Private child of eCookbook","5"], json
@@ -650,7 +770,7 @@ class QueriesControllerTest < Redmine::ControllerTest
         :name => 'assigned_to_id'
       }
     assert_response :success
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
 
     assert_equal 6, json.count
@@ -668,14 +788,15 @@ class QueriesControllerTest < Redmine::ControllerTest
         :name => 'author_id'
       }
     assert_response :success
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
 
-    assert_equal 6, json.count
+    assert_equal 7, json.count
     # "me" value should not be grouped
     assert_include ["<< me >>", "me"], json
     assert_include ["Dave Lopper", "3", "active"], json
     assert_include ["Dave2 Lopper2", "5", "locked"], json
+    assert_include ["Anonymous", User.anonymous.id.to_s], json
   end
 
   def test_user_filter_should_return_active_and_locked_users_grouped_by_status
@@ -686,10 +807,10 @@ class QueriesControllerTest < Redmine::ControllerTest
         :name => 'user_id'
       }
     assert_response :success
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
 
-    assert_equal 6, json.count
+    assert_equal 7, json.count
     # "me" value should not be grouped
     assert_include ["<< me >>", "me"], json
     assert_include ["Dave Lopper", "3", "active"], json
@@ -706,7 +827,7 @@ class QueriesControllerTest < Redmine::ControllerTest
         :name => 'watcher_id'
       }
     assert_response :success
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
 
     assert_equal 1, json.count
@@ -723,7 +844,7 @@ class QueriesControllerTest < Redmine::ControllerTest
         :name => 'watcher_id'
       }
     assert_response :success
-    assert_equal 'application/json', response.content_type
+    assert_equal 'application/json', response.media_type
     json = ActiveSupport::JSON.decode(response.body)
 
     assert_equal 6, json.count

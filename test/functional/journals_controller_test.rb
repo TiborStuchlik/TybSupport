@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,8 +20,10 @@
 require File.expand_path('../../test_helper', __FILE__)
 
 class JournalsControllerTest < Redmine::ControllerTest
-  fixtures :projects, :users, :members, :member_roles, :roles, :issues, :journals, :journal_details, :enabled_modules,
-    :trackers, :issue_statuses, :enumerations, :custom_fields, :custom_values, :custom_fields_projects, :projects_trackers
+  fixtures :projects, :users, :members, :member_roles, :roles,
+           :issues, :journals, :journal_details, :enabled_modules,
+           :trackers, :issue_statuses, :enumerations, :custom_fields,
+           :custom_values, :custom_fields_projects, :projects_trackers
 
   def setup
     User.current = nil
@@ -30,7 +34,7 @@ class JournalsControllerTest < Redmine::ControllerTest
         :project_id => 1
       }
     assert_response :success
-    assert_equal 'application/atom+xml', @response.content_type
+    assert_equal 'application/atom+xml', @response.media_type
   end
 
   def test_index_with_invalid_query_id
@@ -60,6 +64,7 @@ class JournalsControllerTest < Redmine::ControllerTest
   end
 
   def test_index_should_show_visible_custom_fields_only
+    set_tmp_attachments_directory
     Issue.destroy_all
     Journal.delete_all
     field_attributes = {:field_format => 'string', :is_for_all => true, :is_filter => true, :trackers => Tracker.all}
@@ -161,7 +166,7 @@ class JournalsControllerTest < Redmine::ControllerTest
       :xhr => true
     assert_response :success
 
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
     assert_include '> This is an issue', response.body
   end
 
@@ -178,11 +183,13 @@ class JournalsControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 2
     get :new, :params => {
         :id => 6,
-        :journal_id => 4
+        :journal_id => 4,
+        :journal_indice => 1
       },
       :xhr => true
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
+    assert_include 'Redmine Admin wrote in #note-1:', response.body
     assert_include '> A comment with a private version', response.body
   end
 
@@ -196,7 +203,7 @@ class JournalsControllerTest < Redmine::ControllerTest
       },
       :xhr => true
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
     assert_include '> Privates notes', response.body
 
     Role.find(1).remove_permission! :view_private_notes
@@ -215,7 +222,7 @@ class JournalsControllerTest < Redmine::ControllerTest
       },
       :xhr => true
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
     assert_include 'textarea', response.body
   end
 
@@ -229,7 +236,7 @@ class JournalsControllerTest < Redmine::ControllerTest
       },
       :xhr => true
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
     assert_include 'textarea', response.body
 
     Role.find(1).remove_permission! :view_private_notes
@@ -250,9 +257,11 @@ class JournalsControllerTest < Redmine::ControllerTest
       },
       :xhr => true
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
     assert_equal 'Updated notes', Journal.find(2).notes
     assert_include 'journal-2-notes', response.body
+    # response should include journal_indice param for quote link
+    assert_include 'journal_indice=2', response.body
   end
 
   def test_update_xhr_with_private_notes_checked
@@ -265,14 +274,14 @@ class JournalsControllerTest < Redmine::ControllerTest
       },
       :xhr => true
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
     assert_equal true, Journal.find(2).private_notes
     assert_include 'change-2', response.body
     assert_include 'journal-2-private_notes', response.body
   end
 
   def test_update_xhr_with_private_notes_unchecked
-    Journal.find(2).update_attributes(:private_notes => true)
+    Journal.find(2).update(:private_notes => true)
     @request.session[:user_id] = 1
     post :update, :params => {
         :id => 2,
@@ -282,7 +291,7 @@ class JournalsControllerTest < Redmine::ControllerTest
       },
       :xhr => true
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
     assert_equal false, Journal.find(2).private_notes
     assert_include 'change-2', response.body
     assert_include 'journal-2-private_notes', response.body
@@ -316,7 +325,7 @@ class JournalsControllerTest < Redmine::ControllerTest
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
     assert_nil Journal.find_by_id(2)
     assert_include 'change-2', response.body

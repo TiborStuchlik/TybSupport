@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -63,9 +65,9 @@ module Redmine
           @pre_list = []
           text = self.dup
           rip_offtags text, false, false
-          before = ''
-          s = ''
-          after = ''
+          before = +''
+          s = +''
+          after = +''
           i = 0
           l = 1
           started = false
@@ -106,7 +108,7 @@ module Redmine
           sections
         end
 
-      private
+        private
 
         # Patch for RedCloth.  Fixed in RedCloth r128 but _why hasn't released it yet.
         # <a href="http://code.whytheluckystiff.net/redcloth/changeset/128">http://code.whytheluckystiff.net/redcloth/changeset/128</a>
@@ -121,9 +123,10 @@ module Redmine
             ## replace <pre> content
             text.gsub!(/<redpre#(\d+)>/) do
               content = @pre_list[$1.to_i]
-              if content.match(/<code\s+class=["'](\w+)["']>\s?(.+)/m)
-                language = $1
-                text = $2
+              # This regex must match any data produced by RedCloth3#rip_offtags
+              if content.match(/<code\s+class=(?:"([^"]+)"|'([^']+)')>\s?(.*)/m)
+                language = $1 || $2
+                text = $3
                 if Redmine::SyntaxHighlighting.language_supported?(language)
                   text.gsub!(/x%x%/, '&')
                   content = "<code class=\"#{language} syntaxhl\">" +

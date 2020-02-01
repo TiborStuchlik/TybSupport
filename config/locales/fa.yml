@@ -136,6 +136,10 @@ fa:
         earlier_than_minimum_start_date: "به خاطر مسائل مقدم، نمی‌تواند قبل از %{date} باشد"
         not_a_regexp: "یک عبارت منظم معتبر نیست"
         open_issue_with_closed_parent: "یم مسأله باز نمی‌تواند به یک مسأله پدر بسته ضمیمه شود"
+        must_contain_uppercase: "must contain uppercase letters (A-Z)"
+        must_contain_lowercase: "must contain lowercase letters (a-z)"
+        must_contain_digits: "must contain digits (0-9)"
+        must_contain_special_chars: "must contain special characters (!, $, %, ...)"
 
   actionview_instancetag_blank_option: انتخاب کنید
 
@@ -208,7 +212,7 @@ fa:
   error_issue_done_ratios_not_updated: "اندازه انجام شده مسأله به‌روز نشد."
   error_workflow_copy_source: 'یک نوع مسأله یا نقش مبدأ را انتخاب کنید.'
   error_workflow_copy_target: 'نوع مسأله(ها) یا نقش‌(های) مقصد را انتخاب کنید.'
-  error_unable_delete_issue_status: 'وضعیت مسأله را نمی‌توان حذف کرد.'
+  error_unable_delete_issue_status: 'وضعیت مسأله را نمی‌توان حذف کرد. (%{value})'
   error_unable_to_connect: "نمی‌توان متصل شد (%{value})"
   error_attachment_too_big: "این پرونده نمی‌تواند بالاگذاری شود زیرا از بیشینه اندازه مجاز پرونده‌ها (%{max_size}) تجاوز می‌کند"
   error_session_expired: "نشست شما منقضی شده است. لطفاً دوباره وارد شوید."
@@ -598,7 +602,6 @@ fa:
   label_enumeration_new: مقدار جدید
   label_information: اطلاعات
   label_information_plural: اطلاعات
-  label_please_login: وارد شوید
   label_register: ثبت نام
   label_login_with_open_id_option: یا با OpenID وارد شوید
   label_password_lost: بازیابی گذرواژه
@@ -943,7 +946,6 @@ fa:
   label_completed_versions: نسخه‌های کامل‌شده
   label_search_for_watchers: جست‌وجوی ناظرها برای افزودن
   label_session_expiration: انقضای نشست
-  label_show_closed_projects: مشاهده پروژه‌های بسته
   label_status_transitions: انتقال‌های وضعیت
   label_fields_permissions: مجوزهای بخش‌ها
   label_readonly: فقط‌خواندنی
@@ -1065,7 +1067,6 @@ fa:
   button_update: به‌روزرسانی
   button_configure: تنظیمات
   button_quote: نقل قول
-  button_duplicate: تکثیر
   button_show: نمایش
   button_hide: مخفی‌سازی
   button_edit_section: ویرایش این بخش
@@ -1132,13 +1133,14 @@ fa:
   text_default_administrator_account_changed: حساب راه‌بری پیش‌فرض تغییر کرده است
   text_file_repository_writable: پوشه پیوست‌ها نوشتنی است
   text_plugin_assets_writable: پوشه دارایی‌های افزونه‌ها نوشتنی است
-  text_rmagick_available: RMagick در دست‌رس است (اختیاری)
+  text_minimagick_available: MiniMagick در دست‌رس است (اختیاری)
   text_convert_available: ImageMagick convert در دست‌رس است (اختیاری)
   text_destroy_time_entries_question: "%{hours} ساعت روی مسأله‌هایی که می‌خواهید حذف کنید کار گزارش شده است. می‌خواهید چه کنید؟"
   text_destroy_time_entries: ساعت‌های گزارش شده حذف شوند
   text_assign_time_entries_to_project: ساعت‌های گزارش شده به پروژه واگذار شوند
   text_reassign_time_entries: 'ساعت‌های گزارش شده به این مسأله واگذار شوند:'
   text_user_wrote: "%{value} نوشت:"
+  text_user_wrote_in: "%{value} نوشت (%{link}):"
   text_enumeration_destroy_question: "%{count} مورد از مقدار «%{name}» استفاده کرده‌اند."
   text_enumeration_category_reassign_to: 'به این مقدار تغییر کنند:'
   text_email_delivery_not_configured: "دریافت رایانامه تنظیمات نشده است و آگاه‌سازی‌ها غیر فعال هستند.\nکارگزار SMTP خود را در config/email.yml تنظیمات کنید و برنامه را بازنشانی کنید تا فعال شوند."
@@ -1245,3 +1247,57 @@ fa:
   error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
     for other users
   permission_log_time_for_other_users: Log spent time for other users
+  label_tomorrow: tomorrow
+  label_next_week: next week
+  label_next_month: next month
+  text_role_no_workflow: No workflow defined for this role
+  text_status_no_workflow: No tracker uses this status in the workflows
+  setting_mail_handler_preferred_body_part: Preferred part of multipart (HTML) emails
+  setting_show_status_changes_in_mail_subject: Show status changes in issue mail notifications
+    subject
+  label_inherited_from_parent_project: Inherited from parent project
+  label_inherited_from_group: Inherited from group %{name}
+  label_trackers_description: Trackers description
+  label_open_trackers_description: View all trackers description
+  label_preferred_body_part_text: Text
+  label_preferred_body_part_html: HTML (experimental)
+  field_parent_issue_subject: Parent task subject
+  permission_edit_own_issues: Edit own issues
+  text_select_apply_tracker: Select tracker
+  label_updated_issues: Updated issues
+  text_avatar_server_config_html: The current avatar server is <a href="%{url}">%{url}</a>.
+    You can configure it in config/configuration.yml.
+  setting_gantt_months_limit: Maximum number of months displayed on the gantt chart
+  permission_import_time_entries: Import time entries
+  label_import_notifications: Send email notifications during the import
+  text_gs_available: ImageMagick PDF support available (optional)
+  field_recently_used_projects: Number of recently used projects in jump box
+  label_optgroup_bookmarks: Bookmarks
+  label_optgroup_others: Other projects
+  label_optgroup_recents: Recently used
+  button_project_bookmark: Add bookmark
+  button_project_bookmark_delete: Remove bookmark
+  field_history_default_tab: Issue's history default tab
+  label_issue_history_properties: Property changes
+  label_issue_history_notes: Notes
+  label_last_tab_visited: Last visited tab
+  field_unique_id: Unique ID
+  text_no_subject: no subject
+  setting_password_required_char_classes: Required character classes for passwords
+  label_password_char_class_uppercase: uppercase letters
+  label_password_char_class_lowercase: lowercase letters
+  label_password_char_class_digits: digits
+  label_password_char_class_special_chars: special characters
+  text_characters_must_contain: Must contain %{character_classes}.
+  label_starts_with: starts with
+  label_ends_with: ends with
+  label_issue_fixed_version_updated: Target version updated
+  setting_project_list_defaults: Projects list defaults
+  label_display_type: Display results as
+  label_display_type_list: List
+  label_display_type_board: Board
+  label_my_bookmarks: My bookmarks
+  label_import_time_entries: Import time entries
+  field_toolbar_language_options: Code highlighting toolbar languages
+  label_user_mail_notify_about_high_priority_issues_html: Also notify me about issues
+    with a priority of <em>%{prio}</em> or higher

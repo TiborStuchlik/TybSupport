@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -40,7 +42,7 @@ class WatcherTest < ActiveSupport::TestCase
   def test_watch
     assert @issue.add_watcher(@user)
     @issue.reload
-    assert @issue.watchers.detect { |w| w.user == @user }
+    assert @issue.watchers.detect {|w| w.user == @user}
   end
 
   def test_cant_watch_twice

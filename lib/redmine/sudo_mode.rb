@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 require 'active_support/core_ext/object/to_query'
 require 'rack/utils'
 
 module Redmine
   module SudoMode
-
     class SudoRequired < StandardError
     end
 
@@ -150,7 +151,6 @@ module Redmine
       end
 
       module ClassMethods
-
         # Handles sudo requirements for the given actions, preserving the named
         # parameters, or any parameters if you omit the :parameters option.
         #

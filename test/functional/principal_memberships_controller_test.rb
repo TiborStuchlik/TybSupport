@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -52,7 +54,7 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
       },
       :xhr => true
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
   end
 
   def test_create_user_membership
@@ -114,12 +116,12 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
           :membership => {
             :project_ids => [3],
             :role_ids => [2]
-          },  
+          },
           :format => 'js'
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
     member = Member.order('id DESC').first
     assert_equal User.find(7), member.principal
@@ -134,12 +136,12 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
           :user_id => 7,
           :membership => {
             :project_ids => [3]
-          },  
+          },
           :format => 'js'
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
     assert_include 'alert', response.body, "Alert message not sent"
     assert_include 'Role cannot be empty', response.body, "Error message not sent"
@@ -184,12 +186,12 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
           :id => 1,
           :membership => {
             :role_ids => [2]
-          },  
+          },
           :format => 'js'
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
     assert_equal [2], Member.find(1).role_ids
     assert_include '$("#member-1-roles").html("Developer").show();', response.body
@@ -214,7 +216,7 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
     assert_nil Member.find_by_id(1)
     assert_include 'tab-content-memberships', response.body
@@ -226,7 +228,7 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
       },
       :xhr => true
     assert_response :success
-    assert_equal 'text/javascript', response.content_type
+    assert_equal 'text/javascript', response.media_type
   end
 
   def test_create_group_membership
@@ -252,7 +254,7 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
     assert_match /OnlineStore/, response.body
   end
@@ -268,7 +270,7 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
     assert_match /alert/, response.body, "Alert message not sent"
   end
@@ -296,7 +298,7 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
   end
 
@@ -317,7 +319,7 @@ class PrincipalMembershipsControllerTest < Redmine::ControllerTest
         },
         :xhr => true
       assert_response :success
-      assert_equal 'text/javascript', response.content_type
+      assert_equal 'text/javascript', response.media_type
     end
   end
 end

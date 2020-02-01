@@ -1,7 +1,7 @@
-# encoding: utf-8
-#
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -79,7 +79,7 @@ module TimelogHelper
   def report_to_csv(report)
     Redmine::Export::CSV.generate(:encoding => params[:encoding]) do |csv|
       # Column headers
-      headers = report.criteria.collect {|criteria| l(report.available_criteria[criteria][:label]) }
+      headers = report.criteria.collect {|criteria| l_or_humanize(report.available_criteria[criteria][:label]) }
       headers += report.periods
       headers << l(:label_total_time)
       csv << headers

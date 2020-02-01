@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -54,8 +56,7 @@ class Issue < ActiveRecord::Base
 
   DONE_RATIO_OPTIONS = %w(issue_field issue_status)
 
-  attr_accessor :deleted_attachment_ids
-  attr_reader :current_journal
+  attr_writer :deleted_attachment_ids
   delegate :notes, :notes=, :private_notes, :private_notes=, :to => :current_journal, :allow_nil => true
 
   validates_presence_of :subject, :project, :tracker
@@ -76,7 +77,7 @@ class Issue < ActiveRecord::Base
   }
 
   scope :open, lambda {|*args|
-    is_closed = args.size > 0 ? !args.first : false
+    is_closed = !args.empty? ? !args.first : false
     joins(:status).
     where(:issue_statuses => {:is_closed => is_closed})
   }
@@ -119,22 +120,23 @@ class Issue < ActiveRecord::Base
   # Returns a SQL conditions string used to find all issues visible by the specified user
   def self.visible_condition(user, options={})
     Project.allowed_to_condition(user, :view_issues, options) do |role, user|
-      sql = if user.id && user.logged?
-        case role.issues_visibility
-        when 'all'
-          '1=1'
-        when 'default'
-          user_ids = [user.id] + user.groups.pluck(:id).compact
-          "(#{table_name}.is_private = #{connection.quoted_false} OR #{table_name}.author_id = #{user.id} OR #{table_name}.assigned_to_id IN (#{user_ids.join(',')}))"
-        when 'own'
-          user_ids = [user.id] + user.groups.pluck(:id).compact
-          "(#{table_name}.author_id = #{user.id} OR #{table_name}.assigned_to_id IN (#{user_ids.join(',')}))"
+      sql =
+        if user.id && user.logged?
+          case role.issues_visibility
+          when 'all'
+              '1=1'
+          when 'default'
+            user_ids = [user.id] + user.groups.pluck(:id).compact
+            "(#{table_name}.is_private = #{connection.quoted_false} OR #{table_name}.author_id = #{user.id} OR #{table_name}.assigned_to_id IN (#{user_ids.join(',')}))"
+          when 'own'
+            user_ids = [user.id] + user.groups.pluck(:id).compact
+            "(#{table_name}.author_id = #{user.id} OR #{table_name}.assigned_to_id IN (#{user_ids.join(',')}))"
+          else
+              '1=0'
+          end
         else
-          '1=0'
+          "(#{table_name}.is_private = #{connection.quoted_false})"
         end
-      else
-        "(#{table_name}.is_private = #{connection.quoted_false})"
-      end
       unless role.permissions_all_trackers?(:view_issues)
         tracker_ids = role.permissions_tracker_ids(:view_issues)
         if tracker_ids.any?
@@ -150,20 +152,21 @@ class Issue < ActiveRecord::Base
   # Returns true if usr or current user is allowed to view the issue
   def visible?(usr=nil)
     (usr || User.current).allowed_to?(:view_issues, self.project) do |role, user|
-      visible = if user.logged?
-        case role.issues_visibility
-        when 'all'
-          true
-        when 'default'
-          !self.is_private? || (self.author == user || user.is_or_belongs_to?(assigned_to))
-        when 'own'
-          self.author == user || user.is_or_belongs_to?(assigned_to)
+      visible =
+        if user.logged?
+          case role.issues_visibility
+          when 'all'
+            true
+          when 'default'
+            !self.is_private? || (self.author == user || user.is_or_belongs_to?(assigned_to))
+          when 'own'
+            self.author == user || user.is_or_belongs_to?(assigned_to)
+          else
+            false
+          end
         else
-          false
+          !self.is_private?
         end
-      else
-        !self.is_private?
-      end
       unless role.permissions_all_trackers?(:view_issues)
         visible &&= role.permissions_tracker_ids?(:view_issues, tracker_id)
       end
@@ -178,7 +181,9 @@ class Issue < ActiveRecord::Base
 
   # Returns true if user or current user is allowed to edit the issue
   def attributes_editable?(user=User.current)
-    user_tracker_permission?(user, :edit_issues)
+    user_tracker_permission?(user, :edit_issues) || (
+      user_tracker_permission?(user, :edit_own_issues) && author == user
+    )
   end
 
   # Overrides Redmine::Acts::Attachable::InstanceMethods#attachments_editable?
@@ -449,7 +454,8 @@ class Issue < ActiveRecord::Base
     write_attribute :estimated_hours, (h.is_a?(String) ? (h.to_hours || h) : h)
   end
 
-  safe_attributes 'project_id',
+  safe_attributes(
+    'project_id',
     'tracker_id',
     'status_id',
     'category_id',
@@ -466,29 +472,31 @@ class Issue < ActiveRecord::Base
     'custom_fields',
     'lock_version',
     'notes',
-    :if => lambda {|issue, user| issue.new_record? || issue.attributes_editable?(user) }
-
-  safe_attributes 'notes',
-    :if => lambda {|issue, user| issue.notes_addable?(user)}
-
-  safe_attributes 'private_notes',
-    :if => lambda {|issue, user| !issue.new_record? && user.allowed_to?(:set_notes_private, issue.project)}
-
-  safe_attributes 'watcher_user_ids',
-    :if => lambda {|issue, user| issue.new_record? && user.allowed_to?(:add_issue_watchers, issue.project)}
-
-  safe_attributes 'is_private',
+    :if => lambda {|issue, user| issue.new_record? || issue.attributes_editable?(user)})
+  safe_attributes(
+    'notes',
+    :if => lambda {|issue, user| issue.notes_addable?(user)})
+  safe_attributes(
+    'private_notes',
+    :if => lambda {|issue, user| !issue.new_record? && user.allowed_to?(:set_notes_private, issue.project)})
+  safe_attributes(
+    'watcher_user_ids',
+    :if => lambda {|issue, user| issue.new_record? && user.allowed_to?(:add_issue_watchers, issue.project)})
+  safe_attributes(
+    'is_private',
     :if => lambda {|issue, user|
       user.allowed_to?(:set_issues_private, issue.project) ||
         (issue.author_id == user.id && user.allowed_to?(:set_own_issues_private, issue.project))
-    }
-
-  safe_attributes 'parent_issue_id',
-    :if => lambda {|issue, user| (issue.new_record? || issue.attributes_editable?(user)) &&
-      user.allowed_to?(:manage_subtasks, issue.project)}
-
-  safe_attributes 'deleted_attachment_ids',
-    :if => lambda {|issue, user| issue.attachments_deletable?(user)}
+    })
+  safe_attributes(
+    'parent_issue_id',
+    :if => lambda {|issue, user|
+      (issue.new_record? || issue.attributes_editable?(user)) &&
+        user.allowed_to?(:manage_subtasks, issue.project)
+    })
+  safe_attributes(
+    'deleted_attachment_ids',
+    :if => lambda {|issue, user| issue.attachments_deletable?(user)})
 
   def safe_attribute_names(user=nil)
     names = super
@@ -526,7 +534,7 @@ class Issue < ActiveRecord::Base
 
     # Project and Tracker must be set before since new_statuses_allowed_to depends on it.
     if (p = attrs.delete('project_id')) && safe_attribute?('project_id')
-      if p.is_a?(String) && !p.match(/^\d*$/)
+      if p.is_a?(String) && !/^\d*$/.match?(p)
         p_id = Project.find_by_identifier(p).try(:id)
       else
         p_id = p.to_i
@@ -571,8 +579,6 @@ class Issue < ActiveRecord::Base
     if (u = attrs.delete('assigned_to_id')) && safe_attribute?('assigned_to_id')
       self.assigned_to_id = u
     end
-
-
     attrs = delete_unsafe_attributes(attrs, user)
     return if attrs.empty?
 
@@ -767,7 +773,7 @@ class Issue < ActiveRecord::Base
     user = new_record? ? author : current_journal.try(:user)
 
     required_attribute_names(user).each do |attribute|
-      if attribute =~ /^\d+$/
+      if /^\d+$/.match?(attribute)
         attribute = attribute.to_i
         v = custom_field_values.detect {|v| v.custom_field_id == attribute }
         if v && Array(v.value).detect(&:present?).nil?
@@ -1036,6 +1042,7 @@ class Issue < ActiveRecord::Base
     notified = notified.select {|u| u.active? && u.notify_about?(self)}
 
     notified += project.notified_users
+    notified += project.users.preload(:preference).select(&:notify_about_high_priority_issues?) if priority.high?
     notified.uniq!
     # Remove users that can not view the issue
     notified.reject! {|user| !visible?(user)}
@@ -1062,18 +1069,19 @@ class Issue < ActiveRecord::Base
 
   # Returns the total number of hours spent on this issue and its descendants
   def total_spent_hours
-    @total_spent_hours ||= if leaf?
-      spent_hours
-    else
-      self_and_descendants.joins(:time_entries).sum("#{TimeEntry.table_name}.hours").to_f || 0.0
-    end
+    @total_spent_hours ||=
+      if leaf?
+        spent_hours
+      else
+        self_and_descendants.joins(:time_entries).sum("#{TimeEntry.table_name}.hours").to_f || 0.0
+      end
   end
 
   def total_estimated_hours
     if leaf?
       estimated_hours
     else
-      @total_estimated_hours ||= self_and_descendants.sum(:estimated_hours)
+      @total_estimated_hours ||= self_and_descendants.visible.sum(:estimated_hours)
     end
   end
 
@@ -1350,7 +1358,7 @@ class Issue < ActiveRecord::Base
 
   # Returns a string of css classes that apply to the issue
   def css_classes(user=User.current)
-    s = "issue tracker-#{tracker_id} status-#{status_id} #{priority.try(:css_classes)}"
+    s = +"issue tracker-#{tracker_id} status-#{status_id} #{priority.try(:css_classes)}"
     s << ' closed' if closed?
     s << ' overdue' if overdue?
     s << ' child' if child?
@@ -1718,21 +1726,24 @@ class Issue < ActiveRecord::Base
     end
   end
 
-  # Update issues so their versions are not pointing to a
-  # fixed_version that is not shared with the issue's project
-  def self.update_versions(conditions=nil)
-    # Only need to update issues with a fixed_version from
-    # a different project and that is not systemwide shared
-    Issue.joins(:project, :fixed_version).
-      where("#{Issue.table_name}.fixed_version_id IS NOT NULL" +
-        " AND #{Issue.table_name}.project_id <> #{Version.table_name}.project_id" +
-        " AND #{Version.table_name}.sharing <> 'system'").
-      where(conditions).each do |issue|
-      next if issue.project.nil? || issue.fixed_version.nil?
-      unless issue.project.shared_versions.include?(issue.fixed_version)
-        issue.init_journal(User.current)
-        issue.fixed_version = nil
-        issue.save
+  # Singleton class method is public
+  class << self
+    # Update issues so their versions are not pointing to a
+    # fixed_version that is not shared with the issue's project
+    def update_versions(conditions=nil)
+      # Only need to update issues with a fixed_version from
+      # a different project and that is not systemwide shared
+      Issue.joins(:project, :fixed_version).
+        where("#{Issue.table_name}.fixed_version_id IS NOT NULL" +
+          " AND #{Issue.table_name}.project_id <> #{Version.table_name}.project_id" +
+          " AND #{Version.table_name}.sharing <> 'system'").
+        where(conditions).each do |issue|
+        next if issue.project.nil? || issue.fixed_version.nil?
+        unless issue.project.shared_versions.include?(issue.fixed_version)
+          issue.init_journal(User.current)
+          issue.fixed_version = nil
+          issue.save
+        end
       end
     end
   end

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -26,11 +28,12 @@ class TimeEntry < ActiveRecord::Base
   belongs_to :activity, :class_name => 'TimeEntryActivity'
 
   acts_as_customizable
-  acts_as_event :title => Proc.new { |o|
-                  related   = o.issue if o.issue && o.issue.visible?
-                  related ||= o.project
-                  "#{l_hours(o.hours)} (#{related.event_title})"
-                },
+  acts_as_event :title =>
+                  Proc.new {|o|
+                    related   = o.issue if o.issue && o.issue.visible?
+                    related ||= o.project
+                    "#{l_hours(o.hours)} (#{related.event_title})"
+                  },
                 :url => Proc.new {|o| {:controller => 'timelog', :action => 'index', :project_id => o.project, :issue_id => o.issue}},
                 :author => :user,
                 :group => :issue,
@@ -134,17 +137,20 @@ class TimeEntry < ActiveRecord::Base
       if hours_changed? && max_hours > 0.0
         logged_hours = other_hours_with_same_user_and_day
         if logged_hours + hours > max_hours
-          errors.add :base, I18n.t(:error_exceeds_maximum_hours_per_day,
-            :logged_hours => format_hours(logged_hours), :max_hours => format_hours(max_hours))
+          errors.add(
+            :base,
+            I18n.t(:error_exceeds_maximum_hours_per_day,
+                   :logged_hours => format_hours(logged_hours),
+                   :max_hours => format_hours(max_hours)))
         end
       end
     end
     errors.add :project_id, :invalid if project.nil?
-    errors.add :user_id, :invalid if (user_id != author_id && !self.assignable_users.map(&:id).include?(user_id))
+    errors.add :user_id, :invalid if user_id != author_id && !self.assignable_users.map(&:id).include?(user_id)
     errors.add :issue_id, :invalid if (issue_id && !issue) || (issue && project!=issue.project) || @invalid_issue_id
     errors.add :activity_id, :inclusion if activity_id_changed? && project && !project.activities.include?(activity)
     if spent_on_changed? && user
-      errors.add :base, I18n.t(:error_spent_on_future_date) if (!Setting.timelog_accept_future_dates? && (spent_on > user.today))
+      errors.add :base, I18n.t(:error_spent_on_future_date) if !Setting.timelog_accept_future_dates? && (spent_on > user.today)
     end
   end
 
@@ -185,6 +191,13 @@ class TimeEntry < ActiveRecord::Base
   # Returns the custom fields that can be edited by the given user
   def editable_custom_fields(user=nil)
     editable_custom_field_values(user).map(&:custom_field).uniq
+  end
+
+  def visible_custom_field_values(user = nil)
+    user ||= User.current
+    custom_field_values.select do |value|
+      value.custom_field.visible_by?(project, user)
+    end
   end
 
   def assignable_users

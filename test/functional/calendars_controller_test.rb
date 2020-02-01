@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,6 +36,10 @@ class CalendarsControllerTest < Redmine::ControllerTest
            :users, :email_addresses
 
   def test_show
+    # Ensure that an issue to which a user is assigned is in the current
+    # month's calendar in order to test Gravatar
+    travel_to issues(:issues_002).start_date
+
     with_settings :gravatar_enabled => '1' do
       get :show, :params => {
           :project_id => 1

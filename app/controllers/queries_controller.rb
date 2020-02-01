@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -145,6 +147,12 @@ class QueriesController < ApplicationController
       else
         redirect_to issues_gantt_path(options)
       end
+    elsif params[:calendar]
+      if @project
+        redirect_to project_calendar_path(@project, options)
+      else
+        redirect_to issues_calendar_path(options)
+      end
     else
       redirect_to _project_issues_path(@project, options)
     end
@@ -152,6 +160,10 @@ class QueriesController < ApplicationController
 
   def redirect_to_time_entry_query(options)
     redirect_to _time_entries_path(@project, nil, options)
+  end
+
+  def redirect_to_project_query(options)
+    redirect_to projects_path(options)
   end
 
   # Returns the Query subclass, IssueQuery by default

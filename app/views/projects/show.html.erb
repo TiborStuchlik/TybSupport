@@ -1,4 +1,7 @@
 <div class="contextual">
+  <%= bookmark_link @project %>
+
+  <%= actions_dropdown do %>
   <% if User.current.allowed_to?(:add_subprojects, @project) %>
     <%= link_to l(:label_subproject_new), new_project_path(:parent_id => @project), :class => 'icon icon-add' %>
   <% end %>
@@ -8,6 +11,10 @@
     <% else %>
       <%= link_to l(:button_reopen), reopen_project_path(@project), :data => {:confirm => l(:text_are_you_sure)}, :method => :post, :class => 'icon icon-unlock' %>
     <% end %>
+  <% end %>
+  <%= link_to_if_authorized l(:label_settings),
+              {:controller => 'projects', :action => 'settings', :id => @project},
+              :class => 'icon icon-settings' if User.current.allowed_to?(:edit_project, @project) %>
   <% end %>
 </div>
 
@@ -30,14 +37,20 @@
     <li><span class="label"><%=l(:field_homepage)%>:</span> <%= link_to_if uri_with_safe_scheme?(@project.homepage), @project.homepage, @project.homepage %></li>
   <% end %>
   <% render_custom_field_values(@project) do |custom_field, formatted| %>
-    <li><span class="label"><%= custom_field.name %>:</span> <%= formatted %></li>
+    <li class="<%= custom_field.css_classes %>"><span class="label"><%= custom_field.name %>:</span> <%= formatted %></li>
   <% end %>
   </ul>
   <% end %>
 
   <% if User.current.allowed_to?(:view_issues, @project) %>
   <div class="issues box">
-    <h3 class="icon icon-issue"><%=l(:label_issue_tracking)%></h3>
+    <h3 class="icon icon-issue">
+      <%=l(:label_issue_tracking)%>&nbsp;
+      <%= link_to l(:label_details),
+            project_issues_report_details_path(@project, :detail => 'tracker'),
+            :class => 'icon-only icon-zoom-in',
+            :title => l(:label_details) %>
+    </h3>
     <% if @trackers.present? %>
     <table class="list issue-report">
       <thead>
@@ -52,7 +65,7 @@
       <% @trackers.each do |tracker| %>
         <tr>
           <td class="name">
-            <%= link_to tracker.name, project_issues_path(@project, :set_filter => 1, :tracker_id => tracker.id) %>
+            <%= link_to tracker.name, project_issues_path(@project, :set_filter => 1, :tracker_id => tracker.id), :title => tracker.description %>
           </td>
           <td>
             <%= link_to @open_issues_by_tracker[tracker].to_i, project_issues_path(@project, :set_filter => 1, :tracker_id => tracker.id) %>
@@ -118,7 +131,11 @@
   <% if @subprojects.any? %>
   <div class="projects box">
     <h3 class="icon icon-projects"><%=l(:label_subproject_plural)%></h3>
-    <%= @subprojects.collect{|p| link_to p, project_path(p), :class => p.css_classes}.join(", ").html_safe %>
+	<ul class="subprojects">
+	  <% @subprojects.each do |project| %>
+	  <li><%= link_to(project.name, project_path(project), :class => project.css_classes).html_safe %></li>
+	  <% end %> 
+    </ul>
   </div>
   <% end %>
 

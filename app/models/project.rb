@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -23,12 +25,6 @@ class Project < ActiveRecord::Base
   STATUS_ACTIVE     = 1
   STATUS_CLOSED     = 5
   STATUS_ARCHIVED   = 9
-
-  LABEL_BY_STATUS = {
-    1 => l(:project_status_active),
-    5 => l(:project_status_closed),
-    9 => l(:project_status_archived),
-  }
 
   # Maximum length for project identifiers
   IDENTIFIER_MAX_LENGTH = 100
@@ -81,7 +77,7 @@ class Project < ActiveRecord::Base
   # downcase letters, digits, dashes but not digits only
   validates_format_of :identifier, :with => /\A(?!\d+$)[a-z0-9\-_]*\z/, :if => Proc.new { |p| p.identifier_changed? }
   # reserved words
-  validates_exclusion_of :identifier, :in => %w( new )
+  validates_exclusion_of :identifier, :in => %w(new)
   validate :validate_parent
 
   after_save :update_inherited_members, :if => Proc.new {|project| project.saved_change_to_inherit_members?}
@@ -97,14 +93,8 @@ class Project < ActiveRecord::Base
   scope :all_public, lambda { where(:is_public => true) }
   scope :visible, lambda {|*args| where(Project.visible_condition(args.shift || User.current, *args)) }
   scope :allowed_to, lambda {|*args|
-    user = User.current
-    permission = nil
-    if args.first.is_a?(Symbol)
-      permission = args.shift
-    else
-      user = args.shift
-      permission = args.shift
-    end
+    user = args.first.is_a?(Symbol) ? User.current : args.shift
+    permission = args.shift
     where(Project.allowed_to_condition(user, permission, *args))
   }
   scope :like, lambda {|arg|
@@ -185,7 +175,7 @@ class Project < ActiveRecord::Base
     base_statement = (perm && perm.read? ? "#{Project.table_name}.status <> #{Project::STATUS_ARCHIVED}" : "#{Project.table_name}.status = #{Project::STATUS_ACTIVE}")
     if !options[:skip_pre_condition] && perm && perm.project_module
       # If the permission belongs to a project module, make sure the module is enabled
-      base_statement << " AND EXISTS (SELECT 1 AS one FROM #{EnabledModule.table_name} em WHERE em.project_id = #{Project.table_name}.id AND em.name='#{perm.project_module}')"
+      base_statement += " AND EXISTS (SELECT 1 AS one FROM #{EnabledModule.table_name} em WHERE em.project_id = #{Project.table_name}.id AND em.name='#{perm.project_module}')"
     end
     if project = options[:project]
       project_statement = project.project_condition(options[:with_subprojects])
@@ -279,7 +269,7 @@ class Project < ActiveRecord::Base
       self.create_time_entry_activity_if_needed(activity_hash)
     else
       activity = project.time_entry_activities.find_by_id(id.to_i)
-      activity.update_attributes(activity_hash) if activity
+      activity.update(activity_hash) if activity
     end
   end
 
@@ -317,7 +307,7 @@ class Project < ActiveRecord::Base
   end
 
   def self.find(*args)
-    if args.first && args.first.is_a?(String) && !args.first.match(/^\d*$/)
+    if args.first && args.first.is_a?(String) && !/^\d*$/.match?(args.first)
       project = find_by_identifier(*args)
       raise ActiveRecord::RecordNotFound, "Couldn't find Project with identifier=#{args.first}" if project.nil?
       project
@@ -357,7 +347,7 @@ class Project < ActiveRecord::Base
       nil
     else
       # id is used for projects with a numeric identifier (compatibility)
-      @to_param ||= (identifier.to_s =~ %r{^\d*$} ? id.to_s : identifier)
+      @to_param ||= (%r{^\d*$}.match?(identifier.to_s) ? id.to_s : identifier)
     end
   end
 
@@ -626,7 +616,7 @@ class Project < ActiveRecord::Base
   end
 
   def css_classes
-    s = 'project'
+    s = +'project'
     s << ' root' if root?
     s << ' child' if child?
     s << (leaf? ? ' leaf' : ' parent')
@@ -643,20 +633,22 @@ class Project < ActiveRecord::Base
 
   # The earliest start date of a project, based on it's issues and versions
   def start_date
-    @start_date ||= [
-     issues.minimum('start_date'),
-     shared_versions.minimum('effective_date'),
-     Issue.fixed_version(shared_versions).minimum('start_date')
-    ].compact.min
+    @start_date ||=
+      [
+        issues.minimum('start_date'),
+        shared_versions.minimum('effective_date'),
+        Issue.fixed_version(shared_versions).minimum('start_date')
+      ].compact.min
   end
 
   # The latest due date of an issue or version
   def due_date
-    @due_date ||= [
-     issues.maximum('due_date'),
-     shared_versions.maximum('effective_date'),
-     Issue.fixed_version(shared_versions).maximum('due_date')
-    ].compact.max
+    @due_date ||=
+      [
+        issues.maximum('due_date'),
+        shared_versions.maximum('effective_date'),
+        Issue.fixed_version(shared_versions).maximum('due_date')
+      ].compact.max
   end
 
   def overdue?
@@ -748,7 +740,8 @@ class Project < ActiveRecord::Base
     target.destroy unless target.blank?
   end
 
-  safe_attributes 'name',
+  safe_attributes(
+    'name',
     'description',
     'homepage',
     'is_public',
@@ -759,10 +752,12 @@ class Project < ActiveRecord::Base
     'issue_custom_field_ids',
     'parent_id',
     'default_version_id',
-    'default_assigned_to_id'
+    'default_assigned_to_id')
 
-  safe_attributes 'enabled_module_names',
-    :if => lambda {|project, user|
+  safe_attributes(
+    'enabled_module_names',
+    :if =>
+      lambda {|project, user|
         if project.new_record?
           if user.admin?
             true
@@ -772,10 +767,11 @@ class Project < ActiveRecord::Base
         else
           user.allowed_to?(:select_project_modules, project)
         end
-      }
+      })
 
-  safe_attributes 'inherit_members',
-    :if => lambda {|project, user| project.parent.nil? || project.parent.visible?(user)}
+  safe_attributes(
+    'inherit_members',
+    :if => lambda {|project, user| project.parent.nil? || project.parent.visible?(user)})
 
   def safe_attributes=(attrs, user=User.current)
     if attrs.respond_to?(:to_unsafe_hash)
@@ -795,6 +791,18 @@ class Project < ActiveRecord::Base
           @unallowed_parent_id = true
         end
       end
+    end
+
+    # Reject custom fields values not visible by the user
+    if attrs['custom_field_values'].present?
+      editable_custom_field_ids = editable_custom_field_values(user).map {|v| v.custom_field_id.to_s}
+      attrs['custom_field_values'].reject! {|k, v| !editable_custom_field_ids.include?(k.to_s)}
+    end
+
+    # Reject custom fields not visible by the user
+    if attrs['custom_fields'].present?
+      editable_custom_field_ids = editable_custom_field_values(user).map {|v| v.custom_field_id.to_s}
+      attrs['custom_fields'].reject! {|c| !editable_custom_field_ids.include?(c['id'].to_s)}
     end
 
     super(attrs, user)
@@ -866,11 +874,24 @@ class Project < ActiveRecord::Base
       ancestors = projects.first.ancestors.to_a
     end
     projects.sort_by(&:lft).each do |project|
-      while (ancestors.any? && !project.is_descendant_of?(ancestors.last))
+      while ancestors.any? &&
+             !project.is_descendant_of?(ancestors.last)
         ancestors.pop
       end
       yield project, ancestors.size
       ancestors << project
+    end
+  end
+
+  # Returns the custom_field_values that can be edited by the given user
+  def editable_custom_field_values(user=nil)
+    visible_custom_field_values(user)
+  end
+
+  def visible_custom_field_values(user = nil)
+    user ||= User.current
+    custom_field_values.select do |value|
+      value.custom_field.visible_by?(project, user)
     end
   end
 

@@ -136,6 +136,10 @@ zh:
         earlier_than_minimum_start_date: "不能早于 %{date} 由于有前置问题"
         not_a_regexp: "不是一个合法的正则表达式"
         open_issue_with_closed_parent: "无法将一个打开的问题关联至一个被关闭的父任务"
+        must_contain_uppercase: "must contain uppercase letters (A-Z)"
+        must_contain_lowercase: "must contain lowercase letters (a-z)"
+        must_contain_digits: "must contain digits (0-9)"
+        must_contain_special_chars: "must contain special characters (!, $, %, ...)"
 
   actionview_instancetag_blank_option: 请选择
 
@@ -197,7 +201,7 @@ zh:
   error_issue_done_ratios_not_updated: 问题完成度未能被更新。
   error_workflow_copy_source: 请选择一个源跟踪标签或者角色
   error_workflow_copy_target: 请选择目标跟踪标签和角色
-  error_unable_delete_issue_status: '无法删除问题状态'
+  error_unable_delete_issue_status: '无法删除问题状态 (%{value})'
   error_unable_to_connect: "无法连接 (%{value})"
   warning_attachments_not_saved: "%{count} 个文件保存失败"
 
@@ -304,7 +308,7 @@ zh:
   field_comments_sorting: 显示注释
   field_parent_title: 上级页面
   field_editable: 可编辑
-  field_watcher: 跟踪者
+  field_watcher: 关注者
   field_identity_url: OpenID URL
   field_content: 内容
   field_group_by: 根据此条件分组
@@ -391,9 +395,9 @@ zh:
   permission_save_queries: 保存查询
   permission_view_gantt: 查看甘特图
   permission_view_calendar: 查看日历
-  permission_view_issue_watchers: 查看跟踪者列表
-  permission_add_issue_watchers: 添加跟踪者
-  permission_delete_issue_watchers: 删除跟踪者
+  permission_view_issue_watchers: 查看关注者列表
+  permission_add_issue_watchers: 添加关注者
+  permission_delete_issue_watchers: 删除关注者
   permission_log_time: 登记工时
   permission_view_time_entries: 查看耗时
   permission_edit_time_entries: 编辑耗时
@@ -484,7 +488,6 @@ zh:
   label_enumeration_new: 新建枚举值
   label_information: 信息
   label_information_plural: 信息
-  label_please_login: 请登录
   label_register: 注册
   label_login_with_open_id_option: 或使用OpenID登录
   label_password_lost: 忘记密码
@@ -672,7 +675,7 @@ zh:
   label_options: 选项
   label_copy_workflow_from: 从以下选项复制工作流程
   label_permissions_report: 权限报表
-  label_watched_issues: 跟踪的问题
+  label_watched_issues: 关注的问题
   label_related_issues: 相关的问题
   label_applied_status: 应用后的状态
   label_loading: 载入中...
@@ -728,7 +731,7 @@ zh:
   label_user_mail_option_all: "收取我的项目的所有通知"
   label_user_mail_option_selected: "收取选中项目的所有通知..."
   label_user_mail_option_none: "不收取任何通知"
-  label_user_mail_option_only_my_events: "只收取我跟踪或参与的项目的通知"
+  label_user_mail_option_only_my_events: "只收取我关注或参与的项目的通知"
   label_user_mail_no_self_notified: "不要发送对我自己提交的修改的通知"
   label_registration_activation_by_email: 通过邮件认证激活帐号
   label_registration_manual_activation: 手动激活帐号
@@ -748,7 +751,7 @@ zh:
   label_reverse_chronological_order: 按时间顺序（倒序）
   label_incoming_emails: 接收邮件
   label_generate_key: 生成一个key
-  label_issue_watchers: 跟踪者
+  label_issue_watchers: 关注者
   label_example: 示例
   label_display: 显示
   label_sort: 排序
@@ -808,8 +811,8 @@ zh:
   button_sort: 排序
   button_log_time: 登记工时
   button_rollback: 恢复到这个版本
-  button_watch: 跟踪
-  button_unwatch: 取消跟踪
+  button_watch: 关注
+  button_unwatch: 取消关注
   button_reply: 回复
   button_archive: 存档
   button_unarchive: 取消存档
@@ -822,7 +825,6 @@ zh:
   button_update: 更新
   button_configure: 配置
   button_quote: 引用
-  button_duplicate: 副本
   button_show: 显示
 
   status_active: 活动的
@@ -863,7 +865,7 @@ zh:
   text_issue_category_destroy_question: "有一些问题（%{count} 个）属于此类别。您想进行哪种操作？"
   text_issue_category_destroy_assignments: 删除问题的所属类别（问题变为无类别）
   text_issue_category_reassign_to: 为问题选择其它类别
-  text_user_mail_option: "对于没有选中的项目，您将只会收到您跟踪或参与的项目的通知（比如说，您是问题的报告者, 或被指派解决此问题）。"
+  text_user_mail_option: "对于没有选中的项目，您将只会收到您关注或参与的项目的通知（比如说，您是问题的报告者, 或被指派解决此问题）。"
   text_no_configuration_data: "角色、跟踪标签、问题状态和工作流程还没有设置。\n强烈建议您先载入默认设置，然后在此基础上进行修改。"
   text_load_default_configuration: 载入默认设置
   text_status_changed_by_changeset: "已应用到变更列表 %{value}."
@@ -873,12 +875,13 @@ zh:
   text_default_administrator_account_changed: 默认的管理员帐号已改变
   text_file_repository_writable: 附件路径可写
   text_plugin_assets_writable: 插件的附件路径可写
-  text_rmagick_available: RMagick 可用（可选的）
+  text_minimagick_available: MiniMagick 可用（可选的）
   text_destroy_time_entries_question: 您要删除的问题已经上报了 %{hours} 小时的工作量。您想进行那种操作？
   text_destroy_time_entries: 删除上报的工作量
   text_assign_time_entries_to_project: 将已上报的工作量提交到项目中
   text_reassign_time_entries: '将已上报的工作量指定到此问题：'
   text_user_wrote: "%{value} 写到："
+  text_user_wrote_in: "%{value} 在 %{link} 中写到："
   text_enumeration_destroy_question: "%{count} 个对象被关联到了这个枚举值。"
   text_enumeration_category_reassign_to: '将它们关联到新的枚举值：'
   text_email_delivery_not_configured: "邮件参数尚未配置，因此邮件通知功能已被禁用。\n请在config/configuration.yml中配置您的SMTP服务器信息并重新启动以使其生效。"
@@ -1005,7 +1008,7 @@ zh:
   text_issue_conflict_resolution_cancel: 取消我所有的变更并重新刷新显示 %{link} 。
   permission_manage_related_issues: 相关问题管理
   field_auth_source_ldap_filter: LDAP 过滤器
-  label_search_for_watchers: 通过查找方式添加跟踪者
+  label_search_for_watchers: 通过查找方式添加关注者
   notice_account_deleted: 您的账号已被永久删除（账号已无法恢复）。
   setting_unsubscribe: 允许用户退订
   button_delete_my_account: 删除我的账号
@@ -1018,7 +1021,6 @@ zh:
   setting_session_timeout: 会话闲置超时
   label_session_expiration: 会话过期
   permission_close_project: 关闭/重开项目
-  label_show_closed_projects: 查看已关闭的项目
   button_close: 关闭
   button_reopen: 重开
   project_status_active: 已激活
@@ -1248,3 +1250,57 @@ zh:
   error_not_allowed_to_log_time_for_other_users: You are not allowed to log time
     for other users
   permission_log_time_for_other_users: Log spent time for other users
+  label_tomorrow: 明天
+  label_next_week: 下周
+  label_next_month: 下月
+  text_role_no_workflow: No workflow defined for this role
+  text_status_no_workflow: No tracker uses this status in the workflows
+  setting_mail_handler_preferred_body_part: Preferred part of multipart (HTML) emails
+  setting_show_status_changes_in_mail_subject: Show status changes in issue mail notifications
+    subject
+  label_inherited_from_parent_project: Inherited from parent project
+  label_inherited_from_group: Inherited from group %{name}
+  label_trackers_description: Trackers description
+  label_open_trackers_description: View all trackers description
+  label_preferred_body_part_text: Text
+  label_preferred_body_part_html: HTML (experimental)
+  field_parent_issue_subject: Parent task subject
+  permission_edit_own_issues: 更新自己的问题
+  text_select_apply_tracker: Select tracker
+  label_updated_issues: Updated issues
+  text_avatar_server_config_html: The current avatar server is <a href="%{url}">%{url}</a>.
+    You can configure it in config/configuration.yml.
+  setting_gantt_months_limit: Maximum number of months displayed on the gantt chart
+  permission_import_time_entries: Import time entries
+  label_import_notifications: Send email notifications during the import
+  text_gs_available: ImageMagick PDF support available (optional)
+  field_recently_used_projects: Number of recently used projects in jump box
+  label_optgroup_bookmarks: Bookmarks
+  label_optgroup_others: Other projects
+  label_optgroup_recents: Recently used
+  button_project_bookmark: Add bookmark
+  button_project_bookmark_delete: Remove bookmark
+  field_history_default_tab: Issue's history default tab
+  label_issue_history_properties: Property changes
+  label_issue_history_notes: Notes
+  label_last_tab_visited: Last visited tab
+  field_unique_id: Unique ID
+  text_no_subject: no subject
+  setting_password_required_char_classes: Required character classes for passwords
+  label_password_char_class_uppercase: uppercase letters
+  label_password_char_class_lowercase: lowercase letters
+  label_password_char_class_digits: digits
+  label_password_char_class_special_chars: special characters
+  text_characters_must_contain: Must contain %{character_classes}.
+  label_starts_with: starts with
+  label_ends_with: ends with
+  label_issue_fixed_version_updated: Target version updated
+  setting_project_list_defaults: Projects list defaults
+  label_display_type: Display results as
+  label_display_type_list: List
+  label_display_type_board: Board
+  label_my_bookmarks: My bookmarks
+  label_import_time_entries: Import time entries
+  field_toolbar_language_options: Code highlighting toolbar languages
+  label_user_mail_notify_about_high_priority_issues_html: Also notify me about issues
+    with a priority of <em>%{prio}</em> or higher

@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -57,7 +59,7 @@ class SearchCustomFieldsVisibilityTest < Redmine::ControllerTest
     }
 
     Member.where(:project_id => 1).each do |member|
-      member.destroy unless @users_to_test.keys.include?(member.principal)
+      member.destroy unless @users_to_test.key?(member.principal)
     end
   end
 

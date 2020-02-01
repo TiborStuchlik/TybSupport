@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -95,14 +97,18 @@ class WorkflowsController < ApplicationController
     @target_roles = params[:target_role_ids].blank? ?
         nil : Role.where(:id => params[:target_role_ids]).to_a
     if request.post?
-      if params[:source_tracker_id].blank? || params[:source_role_id].blank? || (@source_tracker.nil? && @source_role.nil?)
+      if params[:source_tracker_id].blank? || params[:source_role_id].blank? ||
+           (@source_tracker.nil? && @source_role.nil?)
         flash.now[:error] = l(:error_workflow_copy_source)
       elsif @target_trackers.blank? || @target_roles.blank?
         flash.now[:error] = l(:error_workflow_copy_target)
       else
         WorkflowRule.copy(@source_tracker, @source_role, @target_trackers, @target_roles)
         flash[:notice] = l(:notice_successful_update)
-        redirect_to workflows_copy_path(:source_tracker_id => @source_tracker, :source_role_id => @source_role)
+        redirect_to(
+          workflows_copy_path(:source_tracker_id => @source_tracker,
+                              :source_role_id => @source_role)
+        )
       end
     end
   end

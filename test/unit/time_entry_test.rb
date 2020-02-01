@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -227,15 +229,20 @@ class TimeEntryTest < ActiveSupport::TestCase
 
   def test_create_with_required_issue_id_and_comment_should_be_validated
     set_language_if_valid 'en'
-    with_settings :timelog_required_fields => ['issue_id' , 'comments'] do
-      entry = TimeEntry.new(:project => Project.find(1), :spent_on => Date.today, :author => User.find(1), :user => User.find(1), :activity => TimeEntryActivity.first, :hours => 1)
-
+    with_settings :timelog_required_fields => ['issue_id', 'comments'] do
+      entry = TimeEntry.new(:project => Project.find(1),
+                            :spent_on => Date.today,
+                            :author => User.find(1),
+                            :user => User.find(1),
+                            :activity => TimeEntryActivity.first,
+                            :hours => 1)
       assert !entry.save
       assert_equal ["Comment cannot be blank", "Issue cannot be blank"], entry.errors.full_messages.sort
     end
   end
 
   def test_create_should_validate_user_id
+    set_language_if_valid 'en'
     entry = TimeEntry.new(:spent_on => '2010-01-01',
                           :hours    => 10,
                           :project_id => 1,

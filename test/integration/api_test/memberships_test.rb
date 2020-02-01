@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,7 +26,7 @@ class Redmine::ApiTest::MembershipsTest < Redmine::ApiTest::Base
     get '/projects/1/memberships.xml', :headers => credentials('jsmith')
 
     assert_response :success
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
     assert_select 'memberships[type=array] membership id', :text => '2' do
       assert_select '~ user[id="3"][name="Dave Lopper"]'
       assert_select '~ roles role[id="2"][name=Developer]'
@@ -35,7 +37,7 @@ class Redmine::ApiTest::MembershipsTest < Redmine::ApiTest::Base
     get '/projects/1/memberships.json', :headers => credentials('jsmith')
 
     assert_response :success
-    assert_equal 'application/json', @response.content_type
+    assert_equal 'application/json', @response.media_type
     json = ActiveSupport::JSON.decode(response.body)
     assert_equal 3,  json["total_count"]
     assert_equal 25, json["limit"]
@@ -96,7 +98,7 @@ class Redmine::ApiTest::MembershipsTest < Redmine::ApiTest::Base
         :headers => credentials('jsmith')
 
       assert_response :unprocessable_entity
-      assert_equal 'application/xml', @response.content_type
+      assert_equal 'application/xml', @response.media_type
       assert_select 'errors error', :text => "Principal cannot be blank"
     end
   end
@@ -105,7 +107,7 @@ class Redmine::ApiTest::MembershipsTest < Redmine::ApiTest::Base
     get '/memberships/2.xml', :headers => credentials('jsmith')
 
     assert_response :success
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
     assert_select 'membership id', :text => '2' do
       assert_select '~ user[id="3"][name="Dave Lopper"]'
       assert_select '~ roles role[id="2"][name=Developer]'
@@ -116,7 +118,7 @@ class Redmine::ApiTest::MembershipsTest < Redmine::ApiTest::Base
     get '/memberships/2.json', :headers => credentials('jsmith')
 
     assert_response :success
-    assert_equal 'application/json', @response.content_type
+    assert_equal 'application/json', @response.media_type
     json = ActiveSupport::JSON.decode(response.body)
     assert_equal(
       {"membership" => {
@@ -135,7 +137,7 @@ class Redmine::ApiTest::MembershipsTest < Redmine::ApiTest::Base
         :params => {:membership => {:user_id => 3, :role_ids => [1,2]}},
         :headers => credentials('jsmith')
 
-      assert_response :ok
+      assert_response :no_content
       assert_equal '', @response.body
     end
     member = Member.find(2)
@@ -148,7 +150,7 @@ class Redmine::ApiTest::MembershipsTest < Redmine::ApiTest::Base
       :headers => credentials('jsmith')
 
     assert_response :unprocessable_entity
-    assert_equal 'application/xml', @response.content_type
+    assert_equal 'application/xml', @response.media_type
     assert_select 'errors error', :text => "Role cannot be empty"
   end
 
@@ -156,7 +158,7 @@ class Redmine::ApiTest::MembershipsTest < Redmine::ApiTest::Base
     assert_difference 'Member.count', -1 do
       delete '/memberships/2.xml', :headers => credentials('jsmith')
 
-      assert_response :ok
+      assert_response :no_content
       assert_equal '', @response.body
     end
     assert_nil Member.find_by_id(2)

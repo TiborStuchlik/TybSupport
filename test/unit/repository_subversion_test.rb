@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -136,7 +138,7 @@ class RepositorySubversionTest < ActiveSupport::TestCase
       # with limit
       changesets = @repository.latest_changesets('', nil, 2)
       assert_equal 2, changesets.size
-      assert_equal @repository.latest_changesets('', nil).slice(0,2), changesets
+      assert_equal @repository.latest_changesets('', nil).slice(0, 2), changesets
 
       # with path
       changesets = @repository.latest_changesets('subversion_test/folder', nil)
@@ -234,7 +236,7 @@ class RepositorySubversionTest < ActiveSupport::TestCase
 
     def test_log_encoding_ignore_setting
       with_settings :commit_logs_encoding => 'windows-1252' do
-        s2 = "\xc3\x82\xc2\x80".force_encoding('UTF-8')
+        s2 = "Â\u0080"
         c = Changeset.new(:repository => @repository,
                           :comments   => s2,
                           :revision   => '123',

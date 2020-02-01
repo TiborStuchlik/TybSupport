@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -71,7 +73,7 @@ class Redmine::VersionFieldFormatTest < ActionView::TestCase
 
     assert_equal expected, field.possible_values_options(project).map(&:first)
   end
- 
+
   def test_possible_values_options_should_return_system_shared_versions_without_project
     field = IssueCustomField.new(:field_format => 'version')
     version = Version.generate!(:project => Project.find(1), :status => 'open', :sharing => 'system')
@@ -114,7 +116,9 @@ class Redmine::VersionFieldFormatTest < ActionView::TestCase
     query = Query.new(:project => project)
 
     full_name = "#{version.project} - #{version.name}"
-    assert_include [full_name, version.id.to_s, l(:version_status_locked)],
+    assert_include(
+      [full_name, version.id.to_s, l(:version_status_locked)],
       field.query_filter_options(query)[:values].call
+    )
   end
 end

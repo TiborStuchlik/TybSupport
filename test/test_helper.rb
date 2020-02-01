@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -33,7 +35,7 @@ require File.expand_path(File.dirname(__FILE__) + '/object_helpers')
 include ObjectHelpers
 
 require 'net/ldap'
-require 'mocha/setup'
+require 'mocha/minitest'
 require 'fileutils'
 
 Redmine::SudoMode.disable!
@@ -61,7 +63,8 @@ class ActiveSupport::TestCase
   end
 
   def mock_file(options=nil)
-    options ||= {
+    options ||=
+      {
         :original_filename => 'a_file.png',
         :content_type => 'image/png',
         :size => 32
@@ -85,7 +88,8 @@ class ActiveSupport::TestCase
 
   def with_settings(options, &block)
     saved_settings = options.keys.inject({}) do |h, k|
-      h[k] = case Setting[k]
+      h[k] =
+        case Setting[k]
         when Symbol, false, true, nil
           Setting[k]
         else
@@ -119,7 +123,7 @@ class ActiveSupport::TestCase
   def self.ldap_configured?
     @test_ldap = Net::LDAP.new(:host => $redmine_test_ldap_server, :port => 389)
     return @test_ldap.bind
-  rescue Exception => e
+  rescue => e
     # LDAP is not listening
     return nil
   end
@@ -130,6 +134,14 @@ class ActiveSupport::TestCase
 
   def convert_installed?
     self.class.convert_installed?
+  end
+
+  def self.gs_installed?
+    Redmine::Thumbnail.gs_available?
+  end
+
+  def gs_installed?
+    self.class.gs_installed?
   end
 
   # Returns the path to the test +vendor+ repository
@@ -194,7 +206,7 @@ class ActiveSupport::TestCase
     saved = object.save
     message = "#{object.class} could not be saved"
     errors = object.errors.full_messages.map {|m| "- #{m}"}
-    message << ":\n#{errors.join("\n")}" if errors.any?
+    message += ":\n#{errors.join("\n")}" if errors.any?
     assert_equal true, saved, message
   end
 
@@ -240,7 +252,7 @@ class ActiveSupport::TestCase
   end
 
   def mail_body(mail)
-    mail.parts.first.body.encoded
+    (mail.multipart? ? mail.parts.first : mail).body.encoded
   end
 
   # Returns the lft value for a new root issue
@@ -252,14 +264,14 @@ end
 module Redmine
   class MockFile
     attr_reader :size, :original_filename, :content_type
-  
+
     def initialize(options={})
       @size = options[:size] || 32
       @original_filename = options[:original_filename] || options[:filename]
       @content_type = options[:content_type]
       @content = options[:content] || 'x'*size
     end
-  
+
     def read(*args)
       if @eof
         false
@@ -275,14 +287,14 @@ module Redmine
       arg = arg.dup
       request = arg.keys.detect {|key| key.is_a?(String)}
       raise ArgumentError unless request
+
       options = arg.slice!(request)
-
       raise ArgumentError unless request =~ /\A(GET|POST|PUT|PATCH|DELETE)\s+(.+)\z/
+
       method, path = $1.downcase.to_sym, $2
-
       raise ArgumentError unless arg.values.first =~ /\A(.+)#(.+)\z/
-      controller, action = $1, $2
 
+      controller, action = $1, $2
       assert_routing(
         {:method => method, :path => path},
         options.merge(:controller => controller, :action => action)
@@ -306,12 +318,12 @@ module Redmine
       ids = css_select('tr.issue td.id').map(&:text).map(&:to_i)
       Issue.where(:id => ids).sort_by {|issue| ids.index(issue.id)}
     end
-  
+
     # Return the columns that are displayed in the issue list
     def columns_in_issues_list
       css_select('table.issues thead th:not(.checkbox)').map(&:text).select(&:present?)
     end
-  
+
     # Return the columns that are displayed in the list
     def columns_in_list
       css_select('table.list thead th:not(.checkbox)').map(&:text).select(&:present?)
@@ -326,7 +338,7 @@ module Redmine
     def assert_query_filters(expected_filters)
       response.body =~ /initFilters\(\);\s*((addFilter\(.+\);\s*)*)/
       filter_init = $1.to_s
-  
+
       expected_filters.each do |field, operator, values|
         s = "addFilter(#{field.to_json}, #{operator.to_json}, #{Array(values).to_json});"
         assert_include s, filter_init
@@ -336,7 +348,7 @@ module Redmine
 
     # Saves the generated PDF in tmp/test/pdf
     def save_pdf
-      assert_equal 'application/pdf', response.content_type
+      assert_equal 'application/pdf', response.media_type
       filename = "#{self.class.name.underscore}__#{method_name}.pdf"
       File.open(File.join($redmine_tmp_pdf_directory, filename), "wb") do |f|
         f.write response.body
@@ -362,10 +374,13 @@ module Redmine
       assert_nil session[:user_id]
       assert_response :success
 
-      post "/login", :params => {
+      post(
+        "/login",
+        :params => {
           :username => login,
           :password => password
         }
+      )
       assert_equal login, User.find(session[:user_id]).login
     end
 
@@ -400,9 +415,11 @@ module Redmine
       def upload(format, content, credentials)
         set_tmp_attachments_directory
         assert_difference 'Attachment.count' do
-          post "/uploads.#{format}",
+          post(
+            "/uploads.#{format}",
             :params => content,
             :headers => {"CONTENT_TYPE" => 'application/octet-stream'}.merge(credentials)
+          )
           assert_response :created
         end
         data = response_data
@@ -414,9 +431,10 @@ module Redmine
 
       # Parses the response body based on its content type
       def response_data
-        unless response.content_type.to_s =~ /^application\/(.+)/
-          raise "Unexpected response type: #{response.content_type}"
+        unless response.media_type.to_s =~ /^application\/(.+)/
+          raise "Unexpected response type: #{response.media_type}"
         end
+
         format = $1
         case format
         when 'xml'
@@ -434,8 +452,9 @@ module Redmine
         arg = arg.dup
         request = arg.keys.detect {|key| key.is_a?(String)}
         raise ArgumentError unless request
+
         options = arg.slice!(request)
-  
+
         API_FORMATS.each do |format|
           format_request = request.sub /$/, ".#{format}"
           super options.merge(format_request => arg[request], :format => format)

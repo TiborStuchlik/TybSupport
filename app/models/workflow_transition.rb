@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -50,7 +52,12 @@ class WorkflowTransition < WorkflowRule
 
                 if transition == "1" || transition == true
                   unless w
-                    w = WorkflowTransition.new(:old_status_id => old_status_id, :new_status_id => new_status_id, :tracker_id => tracker.id, :role_id => role.id)
+                    w = WorkflowTransition.new(
+                          :old_status_id => old_status_id,
+                          :new_status_id => new_status_id,
+                          :tracker_id => tracker.id,
+                          :role_id => role.id
+                        )
                     records << w
                   end
                   w.author = true if rule == "author"

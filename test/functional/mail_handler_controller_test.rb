@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -33,10 +35,13 @@ class MailHandlerControllerTest < Redmine::ControllerTest
     Setting.mail_handler_api_key = 'secret'
 
     assert_difference 'Issue.count' do
-      post :index, :params => {
+      post(
+        :index,
+        :params => {
           :key => 'secret',
           :email => IO.read(File.join(FIXTURES_PATH, 'ticket_on_given_project.eml'))
         }
+      )
     end
     assert_response 201
   end
@@ -45,15 +50,17 @@ class MailHandlerControllerTest < Redmine::ControllerTest
     # Enable API and set a key
     Setting.mail_handler_api_enabled = 1
     Setting.mail_handler_api_key = 'secret'
-
     assert_difference 'Issue.count' do
-      post :index, :params => {
+      post(
+        :index,
+        :params => {
           :key => 'secret',
           :email => IO.read(File.join(FIXTURES_PATH, 'ticket_on_given_project.eml')),
           :issue => {
             :is_private => '1'
           }
         }
+      )
     end
     assert_response 201
     issue = Issue.order(:id => :desc).first
@@ -64,13 +71,15 @@ class MailHandlerControllerTest < Redmine::ControllerTest
     # Enable API and set a key
     Setting.mail_handler_api_enabled = 1
     Setting.mail_handler_api_key = 'secret'
-
     assert_no_difference 'Issue.count' do
       assert_difference 'Journal.count' do
-        post :index, :params => {
+        post(
+          :index,
+          :params => {
             :key => 'secret',
             :email => IO.read(File.join(FIXTURES_PATH, 'ticket_reply.eml'))
           }
+        )
       end
     end
     assert_response 201
@@ -81,12 +90,14 @@ class MailHandlerControllerTest < Redmine::ControllerTest
 
     Setting.mail_handler_api_enabled = 1
     Setting.mail_handler_api_key = 'secret'
-
     assert_no_difference 'Issue.count' do
-      post :index, :params => {
+      post(
+        :index,
+        :params => {
           :key => 'secret',
           :email => IO.read(File.join(FIXTURES_PATH, 'ticket_on_given_project.eml'))
         }
+      )
     end
     assert_response 422
   end
@@ -95,12 +106,14 @@ class MailHandlerControllerTest < Redmine::ControllerTest
     # Disable API
     Setting.mail_handler_api_enabled = 0
     Setting.mail_handler_api_key = 'secret'
-
     assert_no_difference 'Issue.count' do
-      post :index, :params => {
+      post(
+        :index,
+        :params => {
           :key => 'secret',
           :email => IO.read(File.join(FIXTURES_PATH, 'ticket_on_given_project.eml'))
         }
+      )
     end
     assert_response 403
     assert_include 'Access denied', response.body
@@ -109,12 +122,14 @@ class MailHandlerControllerTest < Redmine::ControllerTest
   def test_should_not_allow_with_wrong_key
     Setting.mail_handler_api_enabled = 1
     Setting.mail_handler_api_key = 'secret'
-
     assert_no_difference 'Issue.count' do
-      post :index, :params => {
+      post(
+        :index,
+        :params => {
           :key => 'wrong',
           :email => IO.read(File.join(FIXTURES_PATH, 'ticket_on_given_project.eml'))
         }
+      )
     end
     assert_response 403
     assert_include 'Access denied', response.body
@@ -123,10 +138,7 @@ class MailHandlerControllerTest < Redmine::ControllerTest
   def test_new
     Setting.mail_handler_api_enabled = 1
     Setting.mail_handler_api_key = 'secret'
-
-    get :new, :params => {
-        :key => 'secret'
-      }
+    get(:new, :params => {:key => 'secret'})
     assert_response :success
   end
 end

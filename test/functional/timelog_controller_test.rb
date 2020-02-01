@@ -1,6 +1,7 @@
-# -*- coding: utf-8 -*-
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -24,7 +25,7 @@ class TimelogControllerTest < Redmine::ControllerTest
            :trackers, :enumerations, :issue_statuses,
            :custom_fields, :custom_values,
            :projects_trackers, :custom_fields_trackers,
-           :custom_fields_projects, :issue_categories
+           :custom_fields_projects, :issue_categories, :versions
 
   include Redmine::I18n
 
@@ -1192,6 +1193,20 @@ class TimelogControllerTest < Redmine::ControllerTest
     assert_select 'td.issue-category', :text => 'Printing'
   end
 
+  def test_index_with_issue_fixed_version_column
+    issue = Issue.find(1)
+    issue.fixed_version = Version.find(3)
+    issue.save!
+
+    get :index, :params => {
+      :project_id => 'ecookbook',
+      :c => %w(project spent_on issue comments hours issue.fixed_version)
+    }
+
+    assert_response :success
+    assert_select 'td.issue-fixed_version', :text => '2.0'
+  end
+
   def test_index_with_author_filter
     get :index, :params => {
       :project_id => 'ecookbook',
@@ -1227,6 +1242,25 @@ class TimelogControllerTest < Redmine::ControllerTest
     # Make sure that values are properly sorted
     values = css_select("td.issue-category").map(&:text).reject(&:blank?)
     assert_equal ['Printing', 'Printing', 'Recipes'], values
+  end
+
+  def test_index_with_issue_fixed_version_sort
+    issue = Issue.find(1)
+    issue.fixed_version = Version.find(3)
+    issue.save!
+
+    TimeEntry.generate!(:issue => Issue.find(12))
+
+    get :index, :params => {
+      :project_id => 'ecookbook',
+      :c => ["hours", 'issue.fixed_version'],
+      :sort => 'issue.fixed_version'
+    }
+
+    assert_response :success
+    # Make sure that values are properly sorted
+    values = css_select("td.issue-fixed_version").map(&:text).reject(&:blank?)
+    assert_equal ['1.0', '2.0', '2.0'], values
   end
 
   def test_index_with_filter_on_issue_custom_field
@@ -1307,7 +1341,7 @@ class TimelogControllerTest < Redmine::ControllerTest
   def test_index_atom_feed
     get :index, :params => {:project_id => 1, :format => 'atom'}
     assert_response :success
-    assert_equal 'application/atom+xml', @response.content_type
+    assert_equal 'application/atom+xml', @response.media_type
     assert_select 'entry > title', :text => /7\.65 hours/
   end
 
@@ -1349,7 +1383,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     with_settings :date_format => '%m/%d/%Y' do
       get :index, :params => {:format => 'csv'}
       assert_response :success
-      assert_equal 'text/csv; header=present', response.content_type
+      assert_equal 'text/csv', response.media_type
     end
   end
 
@@ -1357,7 +1391,7 @@ class TimelogControllerTest < Redmine::ControllerTest
     with_settings :date_format => '%m/%d/%Y' do
       get :index, :params => {:project_id => 1, :format => 'csv'}
       assert_response :success
-      assert_equal 'text/csv; header=present', response.content_type
+      assert_equal 'text/csv', response.media_type
     end
   end
 
@@ -1369,5 +1403,46 @@ class TimelogControllerTest < Redmine::ControllerTest
     line = response.body.split("\n").detect {|l| l.include?(entry.comments)}
     assert_not_nil line
     assert_include "#{issue.tracker} #1: #{issue.subject}", line
+  end
+
+  def test_index_grouped_by_created_on
+    skip unless TimeEntryQuery.new.groupable_columns.detect {|c| c.name == :created_on}
+
+    get :index, :params => {
+        :set_filter => 1,
+        :group_by => 'created_on'
+      }
+    assert_response :success
+
+    assert_select 'tr.group span.name', :text => '03/23/2007' do
+      assert_select '+ span.count', :text => '2'
+    end
+  end
+
+  def test_index_grouped_by_issue
+    get :index, :params => {
+        :set_filter => 1,
+        :group_by => 'issue'
+      }
+    assert_response :success
+
+    assert_select 'tr.group span.name', :text => 'Bug #1: Cannot print recipes' do
+      assert_select '+ span.count', :text => '2'
+    end
+  end
+
+  def test_index_with_inline_issue_long_text_custom_field_column
+    field = IssueCustomField.create!(:name => 'Long text', :field_format => 'text', :full_width_layout => '1',
+      :tracker_ids => [1], :is_for_all => true)
+    issue = Issue.find(1)
+    issue.custom_field_values = {field.id => 'This is a long text'}
+    issue.save!
+
+    get :index, :params => {
+        :set_filter => 1,
+        :c => ['subject', 'description', "issue.cf_#{field.id}"]
+      }
+    assert_response :success
+    assert_select "td.issue_cf_#{field.id}", :text => 'This is a long text'
   end
 end

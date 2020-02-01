@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -96,6 +98,10 @@ module Redmine
       # Set a default directory if it was not provided during registration
       p.directory(File.join(self.directory, id.to_s)) if p.directory.nil?
 
+      unless File.directory?(p.directory)
+        raise PluginNotFound, "Plugin not found. The directory for plugin #{p.id} should be #{p.directory}."
+      end
+
       # Adds plugin locales if any
       # YAML translation files should be found under <plugin>/config/locales/
       Rails.application.config.i18n.load_path += Dir.glob(File.join(p.directory, 'config', 'locales', '*.yml'))
@@ -107,11 +113,13 @@ module Redmine
         ActionMailer::Base.prepend_view_path(view_path)
       end
 
-      # Adds the app/{controllers,helpers,models} directories of the plugin to the autoload path
-      Dir.glob File.expand_path(File.join(p.directory, 'app', '{controllers,helpers,models}')) do |dir|
-        ActiveSupport::Dependencies.autoload_paths += [dir]
-        Rails.application.config.eager_load_paths += [dir] if Rails.env == 'production'
-      end
+      # Add the plugin directories to rails autoload paths
+      engine_cfg = Rails::Engine::Configuration.new(p.directory)
+      engine_cfg.paths.add 'lib', eager_load: true
+      Rails.application.config.eager_load_paths += engine_cfg.eager_load_paths
+      Rails.application.config.autoload_once_paths += engine_cfg.autoload_once_paths
+      Rails.application.config.autoload_paths += engine_cfg.autoload_paths
+      ActiveSupport::Dependencies.autoload_paths += engine_cfg.eager_load_paths + engine_cfg.autoload_once_paths + engine_cfg.autoload_paths
 
       # Defines plugin setting if present
       if p.settings
@@ -267,7 +275,11 @@ module Redmine
       arg = { :version_or_higher => arg } unless arg.is_a?(Hash)
       arg.assert_valid_keys(:version, :version_or_higher)
 
-      plugin = Plugin.find(plugin_name)
+      begin
+        plugin = Plugin.find(plugin_name)
+      rescue PluginNotFound
+        raise PluginRequirementError.new("#{id} plugin requires the #{plugin_name} plugin")
+      end
       current = plugin.version.split('.').collect(&:to_i)
 
       arg.each do |k, v|
@@ -330,7 +342,7 @@ module Redmine
     #   permission :say_hello, { :example => :say_hello }, :require => :member
     def permission(name, actions, options = {})
       if @project_module
-        Redmine::AccessControl.map {|map| map.project_module(@project_module) {|map|map.permission(name, actions, options)}}
+        Redmine::AccessControl.map {|map| map.project_module(@project_module) {|map| map.permission(name, actions, options)}}
       else
         Redmine::AccessControl.map {|map| map.permission(name, actions, options)}
       end
@@ -386,7 +398,7 @@ module Redmine
     #   * :label - label for the formatter displayed in application settings
     #
     # Examples:
-    #   wiki_format_provider(:custom_formatter, CustomFormatter, :label => "My custom formatter") 
+    #   wiki_format_provider(:custom_formatter, CustomFormatter, :label => "My custom formatter")
     #
     def wiki_format_provider(name, *args)
       Redmine::WikiFormatting.register(name, *args)
@@ -410,7 +422,7 @@ module Redmine
         base_target_dir = File.join(destination, File.dirname(source_files.first).gsub(source, ''))
         begin
           FileUtils.mkdir_p(base_target_dir)
-        rescue Exception => e
+        rescue => e
           raise "Could not create directory #{base_target_dir}: " + e.message
         end
       end
@@ -421,7 +433,7 @@ module Redmine
         target_dir = File.join(destination, dir.gsub(source, ''))
         begin
           FileUtils.mkdir_p(target_dir)
-        rescue Exception => e
+        rescue => e
           raise "Could not create directory #{target_dir}: " + e.message
         end
       end
@@ -432,7 +444,7 @@ module Redmine
           unless File.exist?(target) && FileUtils.identical?(file, target)
             FileUtils.cp(file, target)
           end
-        rescue Exception => e
+        rescue => e
           raise "Could not copy #{file} to #{target}: " + e.message
         end
       end
@@ -489,22 +501,22 @@ module Redmine
 
     class MigrationContext < ActiveRecord::MigrationContext
       def up(target_version = nil)
-        selected_migrations = if block_given?
-          migrations.select { |m| yield m }
-        else
-          migrations
-        end
-
+        selected_migrations =
+          if block_given?
+            migrations.select { |m| yield m }
+          else
+            migrations
+          end
         Migrator.new(:up, selected_migrations, target_version).migrate
       end
 
       def down(target_version = nil)
-        selected_migrations = if block_given?
-          migrations.select { |m| yield m }
-        else
-          migrations
-        end
-
+        selected_migrations =
+          if block_given?
+            migrations.select { |m| yield m }
+          else
+            migrations
+          end
         Migrator.new(:down, selected_migrations, target_version).migrate
       end
 

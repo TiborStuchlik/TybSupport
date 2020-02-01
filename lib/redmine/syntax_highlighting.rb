@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # Redmine - project management software
-# Copyright (C) 2006-2017  Jean-Philippe Lang
+# Copyright (C) 2006-2019  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +19,6 @@
 
 module Redmine
   module SyntaxHighlighting
-
     class << self
       attr_reader :highlighter
 
@@ -50,6 +51,14 @@ module Redmine
       rescue
         false
       end
+
+      def filename_supported?(filename)
+        if highlighter.respond_to? :filename_supported?
+          highlighter.filename_supported? filename
+        else
+          false
+        end
+      end
     end
 
     module Rouge
@@ -76,7 +85,14 @@ module Redmine
         # Highlights +text+ as the content of +filename+
         # Should not return line numbers nor outer pre tag
         def highlight_by_filename(text, filename)
-          lexer =::Rouge::Lexer.guess_by_filename(filename)
+          # TODO: Delete the following workaround for #30434 and
+          # test_syntax_highlight_should_normalize_line_endings in
+          # application_helper_test.rb when Rouge is improved to
+          # handle CRLF properly.
+          # See also: https://github.com/jneen/rouge/pull/1078
+          text = text.gsub(/\r\n?/, "\n")
+
+          lexer =::Rouge::Lexer.guess(:source => text, :filename => filename)
           formatter = ::Rouge::Formatters::HTML.new
           ::Rouge.highlight(text, lexer, CustomHTMLLinewise.new(formatter))
         end
@@ -92,8 +108,13 @@ module Redmine
         def language_supported?(language)
           find_lexer(language.to_s.downcase) ? true : false
         end
-        
+
+        def filename_supported?(filename)
+          !::Rouge::Lexer.guesses(:filename => filename).empty?
+        end
+
         private
+
         # Alias names used by CodeRay and not supported by Rouge
         LANG_ALIASES = {
           'delphi' => 'pascal',
