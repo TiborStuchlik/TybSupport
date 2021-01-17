@@ -116,10 +116,13 @@
 #header {
   @extend %clearfix;
   position: relative;
+
+  height: 48px;
   background-color: $header-bg;
   color: $header-text;
 
   > h1 {
+    min-height: 48px;
     padding: $header-padding-vertical $header-padding-horizontal;
 
     @if $use-logo {
