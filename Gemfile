@@ -11,7 +11,7 @@ gem "roadie-rails", "~> 1.3.0"
 gem "mimemagic"
 gem "mail", "~> 2.7.1"
 gem "csv", "~> 3.0.1" if RUBY_VERSION < "2.6"
-gem "nokogiri", "~> 1.10.0"
+gem "nokogiri", "~> 1.10.7"
 gem "i18n", "~> 1.6.0"
 gem "rbpdf", "~> 1.19.6"
 
@@ -74,7 +74,7 @@ end
 
 group :development do
   gem "yard"
-  #gem 'puma', '~> 3.7'
+  gem 'puma', '~> 3.7'
 end
 
 group :test do
@@ -82,7 +82,7 @@ group :test do
   gem "mocha"
   gem "simplecov", "~> 0.16.1", :require => false
   # For running system tests
-  gem 'puma', '~> 3.7'
+  #gem 'puma', '~> 3.7'
   gem "capybara", '~> 2.13'
   gem "selenium-webdriver"
 end
