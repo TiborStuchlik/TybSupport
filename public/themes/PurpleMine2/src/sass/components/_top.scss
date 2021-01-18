@@ -117,12 +117,12 @@
   @extend %clearfix;
   position: relative;
 
-  height: 48px;
+  //height: 48px;
   background-color: $header-bg;
   color: $header-text;
 
   > h1 {
-    min-height: 48px;
+    min-height: 28px;
     padding: $header-padding-vertical $header-padding-horizontal;
 
     @if $use-logo {
